@@ -240,7 +240,7 @@ namespace Union {
         StringUTF16 dllPath = notificationData->Unloaded.FullDllName->Buffer;
         if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
           StringUTF16::Format( L"[-] {0}", dllPath ).StdPrintLine();
-          auto dll = Dll::Find( notificationData->Loaded.DllBase );
+          auto dll = Dll::Find( notificationData->Unloaded.DllBase );
           HookProviderPatch::ReleaseInRange( dll );
           ProcessImm32Collection::GetInstance().ReleaseModule( dll );
           dll->Forget();
