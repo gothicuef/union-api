@@ -40,6 +40,11 @@ namespace Union {
       Array<void*> Addresses;
       Array<void*> Offsets;
       Array<void*> XCalls;
+
+      ~ModuleImm32Collection() {
+        for( auto segment : Segments )
+          delete segment;
+      }
     };
 
     Array<ModuleImm32Collection*> ModuleImm32Collections;
@@ -53,6 +58,7 @@ namespace Union {
     void GetImm32For( void* address, ModuleImm32Collection* moduleImm32, OUT Array<void*>& addresses, OUT Array<void*>& offsets );
   public:
     void AnalizeModule( Dll* dll );
+    void ReleaseModule( Dll* dll );
     void GetImm32For( void* address, Dll* dll, OUT Array<void*>& addresses, OUT Array<void*>& offsets );
     void GetImm32For( void* address, OUT Array<void*>& addresses, OUT Array<void*>& offsets );
     static ProcessImm32Collection& GetInstance();
@@ -217,6 +223,16 @@ namespace Union {
 
     StringANSI::Format( "  Addresses: {0}\n  Offsets: {1}\n  XCalls: {2}",
       moduleImm32->Addresses.GetCount(), moduleImm32->Offsets.GetCount(), moduleImm32->XCalls.GetCount() ).StdPrintLine();
+  }
+
+
+  inline void ProcessImm32Collection::ReleaseModule( Dll* dll ) {
+    for( auto moduleImm32 : ModuleImm32Collections ) {
+      if( moduleImm32->Dll == dll ) {
+        ModuleImm32Collections.Delete( moduleImm32 );
+        return;
+      }
+    }
   }
 
 

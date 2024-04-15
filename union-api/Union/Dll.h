@@ -36,6 +36,7 @@ namespace Union {
     virtual bool GetRange( void*& imageBase, size_t& imageLength ) const;
     virtual void Acquire();
     virtual void Release();
+    virtual void Forget();
 
     static Dll* Load( const char* dllName, bool asResource = false );
     static Dll* Load( const wchar_t* dllName, bool asResource = false );
@@ -117,6 +118,11 @@ namespace Union {
 
   inline void Dll::Release() {
     ::FreeLibrary( (HMODULE)Handle );
+  }
+
+
+  inline void Dll::Forget() {
+    delete this;
   }
 
 
