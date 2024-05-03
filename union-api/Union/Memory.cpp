@@ -230,8 +230,10 @@ namespace Union {
         if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
           StringUTF16::Format( L"[+] {0}", dllPath ).StdPrintLine();
           auto dll = Dll::Find( notificationData->Loaded.DllBase );
-          ProcessImm32Collection::GetInstance().AnalizeModule( dll );
-          HookProviderPatch::UpdateInRange( dll );
+          if( !ProcessImm32Collection::GetInstance().IsInCollection( dll ) ) {
+            ProcessImm32Collection::GetInstance().AnalizeModule( dll );
+            HookProviderPatch::UpdateInRange( dll );
+          }
         }
         break;
       }
@@ -241,8 +243,10 @@ namespace Union {
         if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
           StringUTF16::Format( L"[-] {0}", dllPath ).StdPrintLine();
           auto dll = Dll::Find( notificationData->Unloaded.DllBase );
-          HookProviderPatch::ReleaseInRange( dll );
-          ProcessImm32Collection::GetInstance().ReleaseModule( dll );
+          if( ProcessImm32Collection::GetInstance().IsInCollection( dll ) ) {
+            HookProviderPatch::ReleaseInRange( dll );
+            ProcessImm32Collection::GetInstance().ReleaseModule( dll );
+          }
           dll->Forget();
         }
         break;

@@ -390,6 +390,7 @@
     <ClInclude Include="Union\Locale.h" />
     <ClInclude Include="Union\Memory.h" />
     <ClInclude Include="Union\ModuleImm32Collection.h" />
+    <ClInclude Include="Union\RawMemory.h" />
     <ClInclude Include="Union\Signature.h" />
     <ClInclude Include="Union\Stream.h" />
     <ClInclude Include="Union\String.h" />
