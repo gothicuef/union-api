@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <malloc.h>
 #include <psapi.h>
+#include "LDR.h"
 #include "Types.h"
 #include "Memory.h"
 #include "Dll.h"
@@ -39,6 +40,7 @@ namespace Union {
     MsizeFunction Msize;
 
     SharedMemory();
+    void InitializeLDR();
     virtual int SearchSingleton( const char* singletonName );
     virtual void Insert( const char* singletonName, void* address );
     virtual void* Share( const char* singletonName );
@@ -47,6 +49,7 @@ namespace Union {
     void operator delete(void* memory);
     static void InitializeInstance();
     static void InitializeDll();
+    static void __stdcall DllLoadCallback( ulong notificationReason, PLDR_DLL_NOTIFICATION_DATA notificationData, void* context );
     static SharedMemory& GetInstance();
   };
 
@@ -202,6 +205,56 @@ namespace Union {
     UnionSharedMemoryInstance = new SharedMemory();
     StringANSI::Format( "New shared memory was initialized: {0}",
       ToHEX( UnionSharedMemoryInstance ) ).StdPrintLine();
+
+    UnionSharedMemoryInstance->InitializeLDR();
+  }
+
+
+  void SharedMemory::InitializeLDR() {
+    PVOID registrationHandle;
+    NTSTATUS status = LdrRegisterDllNotification( 0, DllLoadCallback, NULL, &registrationHandle );
+  }
+
+
+  void SharedMemory::DllLoadCallback( ulong notificationReason, PLDR_DLL_NOTIFICATION_DATA notificationData, void* context ) {
+    static StringUTF16 gameDirectory = [] {
+      wchar_t moduleFileName[2048];
+      GetModuleFileNameW( GetModuleHandleW( nullptr ), moduleFileName, sizeof( moduleFileName ) / sizeof( wchar_t ) - 1 );
+      return StringUTF16( moduleFileName ).GetDirectory().GetDirectory();
+      }();
+
+      switch( notificationReason ) {
+      case LDR_DLL_NOTIFICATION_REASON_LOADED:
+      {
+        StringUTF16 dllPath = notificationData->Loaded.FullDllName->Buffer;
+        if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
+          StringUTF16::Format( L"[+] {0}", dllPath ).StdPrintLine();
+          auto dll = Dll::Find( notificationData->Loaded.DllBase );
+          if( !ProcessImm32Collection::GetInstance().IsInCollection( dll ) ) {
+            ProcessImm32Collection::GetInstance().AnalizeModule( dll );
+            HookProviderPatch::UpdateInRange( dll );
+          }
+        }
+        break;
+      }
+      case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
+      {
+        StringUTF16 dllPath = notificationData->Unloaded.FullDllName->Buffer;
+        if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
+          StringUTF16::Format( L"[-] {0}", dllPath ).StdPrintLine();
+          auto dll = Dll::Find( notificationData->Unloaded.DllBase );
+          if( ProcessImm32Collection::GetInstance().IsInCollection( dll ) ) {
+            HookProviderPatch::ReleaseInRange( dll );
+            ProcessImm32Collection::GetInstance().ReleaseModule( dll );
+          }
+          dll->Forget();
+        }
+        break;
+      }
+      default:
+        StringUTF16::Format( L"[?]" ).StdPrintLine();
+        break;
+      }
   }
 
 

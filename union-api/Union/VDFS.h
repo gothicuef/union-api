@@ -111,7 +111,7 @@ namespace Union {
       static int Sortion_ByNameStringed( File* const& l, StringANSI const& r );
     };
 
-    class Volume {
+    class UNION_API Volume {
       friend class VDFS;
       Stream* BaseStream;
       StringANSI FullName;
@@ -303,7 +303,6 @@ namespace Union {
   };
 
 
-#if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
 #pragma region vdfs_api
   /**
    * @brief Opens a virtual file to read
@@ -451,6 +450,7 @@ namespace Union {
 #pragma endregion
 
 
+#if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
 #pragma region vdfs_file
   inline VDFS::File::File() {
     BaseStream = nullptr;

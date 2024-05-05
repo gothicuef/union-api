@@ -131,6 +131,7 @@ namespace Union {
     void ShrinkToFit();
     uint GetAllocatedLength() const;
     bool IsEmpty() const;
+    bool IsBlank() const;
     bool StartsWith( const T* c_str, Flags flags = Flags::Default ) const;
     bool EndsWith( const T* c_str, Flags flags = Flags::Default ) const;
     bool IsSame( const T* c_str, Flags flags = Flags::Default ) const;
@@ -1040,6 +1041,24 @@ namespace Union {
   template<typename T>
   bool UnionString<T>::IsEmpty() const {
     return Length == 0;
+  }
+
+
+  template<typename T>
+  bool UnionString<T>::IsBlank() const {
+    for( size_t i = 0; i < Length; i++ ) {
+      bool isBlank =
+        Data[i] == ' ' ||
+        Data[i] == '\t' ||
+        Data[i] == '\r' ||
+        Data[i] == '\n' ||
+        Data[i] == '\0';
+
+      if( !isBlank )
+        return false;
+    }
+
+    return true;
   }
 
 
