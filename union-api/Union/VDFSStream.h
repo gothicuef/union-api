@@ -7,8 +7,8 @@
 #include "Types.h"
 #include "Stream.h"
 #include "Thread.h"
-#include "Thirdparty/Vorbis.h"
-#include "Thirdparty/Zlib.h"
+#include "vorbis/vorbisfile.h"
+#include "zlib.h"
 
 #pragma push_macro("min")
 #pragma push_macro("max")
