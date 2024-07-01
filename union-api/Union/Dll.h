@@ -36,12 +36,13 @@ namespace Union {
     virtual bool GetRange( void*& imageBase, size_t& imageLength ) const;
     virtual void Acquire();
     virtual void Release();
+    virtual void Forget();
 
     static Dll* Load( const char* dllName, bool asResource = false );
     static Dll* Load( const wchar_t* dllName, bool asResource = false );
     static Dll* Find( const StringANSI& name );
     static Dll* Find( HANDLE module );
-    static HANDLE FindNearestModule( void* where = &FindNearestModule );
+    static HANDLE FindNearestModule( void* where = &CreateSharedSingleton );
   protected:
     static Array<Dll*>& GetDllList();
   };
@@ -117,6 +118,11 @@ namespace Union {
 
   inline void Dll::Release() {
     ::FreeLibrary( (HMODULE)Handle );
+  }
+
+
+  inline void Dll::Forget() {
+    delete this;
   }
 
 

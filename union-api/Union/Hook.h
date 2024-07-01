@@ -2,13 +2,18 @@
 #ifndef __UNION_HOOK_H__
 #define __UNION_HOOK_H__
 
+#include "HookProto.h"
 #include "HookDetours.h"
 #include "HookPatch.h"
 #include "HookPartial.h"
+#include "Signature.h"
 
 namespace Union {
-  template<typename Signature>
-  inline Hook<Signature> CreateHook( void* originPtr, Signature destPtr, HookType type = HookType::Hook_Auto ) {
+  template<typename EntryType>
+  inline Hook<EntryType> CreateHook( void* originPtr, EntryType destPtr, HookType type = HookType::Hook_Auto ) {
+    if( !HookProvider::CanHookThisSpace() )
+      return Hook<EntryType>( nullptr );
+    
     HookProvider* provider = nullptr;
 
     if( originPtr && destPtr ) {
@@ -29,7 +34,20 @@ namespace Union {
       }
     }
 
-    return Hook<Signature>( provider );
+    return Hook<EntryType>( provider );
+  }
+
+
+  template<typename EntryType>
+  inline Hook<EntryType> CreateHook( Signature originSig, EntryType destPtr, HookType type = HookType::Hook_Auto ) {
+    if( !HookProvider::CanHookThisSpace() )
+      return Hook<EntryType>( nullptr );
+    
+    auto similarSignature = SignatureFile::FindSimilarSignatureInThisHookspace( &originSig );
+    if( similarSignature == null )
+      return Hook<EntryType>( nullptr );
+
+    return CreateHook( similarSignature->GetAddress(), destPtr, type );
   }
 
 

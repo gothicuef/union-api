@@ -268,6 +268,10 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>$(ComSpec) "copy $(IntDirFullPath)UnionAPI.lib $(ProjectDir)Libs\$(Configuration)\UnionAPI.lib"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='LIB|Win32'">
     <ClCompile>
@@ -278,6 +282,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_UNION_API_LIB;%(PreprocessorDefinitions);_UNION_API_BUILD</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -385,6 +390,7 @@
     <ClInclude Include="Union\Locale.h" />
     <ClInclude Include="Union\Memory.h" />
     <ClInclude Include="Union\ModuleImm32Collection.h" />
+    <ClInclude Include="Union\RawMemory.h" />
     <ClInclude Include="Union\Signature.h" />
     <ClInclude Include="Union\Stream.h" />
     <ClInclude Include="Union\String.h" />

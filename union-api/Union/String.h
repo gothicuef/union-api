@@ -1,4 +1,3 @@
-#pragma once
 #ifndef __UNION_STRING_H__
 #define __UNION_STRING_H__
 
@@ -51,8 +50,10 @@ namespace Union {
     explicit UnionString( bool boolean );
     UnionString( T character );
     UnionString( const T* c_str );
+    UnionString( const T* c_str0, const T* c_str1 );
     UnionString( const T* c_str, uint length );
     UnionString( byte character );
+    UnionString( void* digit );
     UnionString( int digit, uint radix = 10 );
     UnionString( uint digit, uint radix = 10 );
     UnionString( long digit, uint radix = 10 );
@@ -116,7 +117,12 @@ namespace Union {
     int ShowMessage( const T* title = _lpStrT( "" ), int flags = 0 ) const;
     int ShowMessage( int flags ) const;
     int StdPrint() const;
+    int StdPrint( int messageLevel ) const;
     int StdPrintLine() const;
+    int StdPrintLine( int messageLevel ) const;
+    static void StdSetCodepage( int codepage );
+    static void SetMessageLevel( int messageLevel );
+    static int& GetMessageLevel();
 #pragma endregion
 
 #pragma region service_simple
@@ -125,6 +131,7 @@ namespace Union {
     void ShrinkToFit();
     uint GetAllocatedLength() const;
     bool IsEmpty() const;
+    bool IsBlank() const;
     bool StartsWith( const T* c_str, Flags flags = Flags::Default ) const;
     bool EndsWith( const T* c_str, Flags flags = Flags::Default ) const;
     bool IsSame( const T* c_str, Flags flags = Flags::Default ) const;
@@ -135,6 +142,8 @@ namespace Union {
     uint Search( const T* c_str, uint pos, Flags flags = Flags::Default ) const;
     bool Contains( const T* c_str, Flags flags = Flags::Default ) const;
     uint GetContainsCount( const T* c_str, Flags flags = Flags::Default ) const;
+    template<typename _Lambda>
+    void WalkThroughLines( _Lambda proc/*void(*)( const UnionString<T>& )*/ );
 #pragma endregion
 
 #pragma region service_advanced
@@ -198,9 +207,20 @@ namespace Union {
 #pragma endregion
 
 #pragma region regex
+    
+    struct Match {
+      Array<UnionString<T>> Items;
+      Match() { }
+      Match( Match& match ) : Items( match.Items.Share() ) { }
+      operator const UnionString<T>& () const { return Items.GetFirst(); }
+      operator bool() const { return !Items.IsEmpty(); }
+      const UnionString<T>& operator []( int index ) const { return Items[index]; }
+      uint GetLength() const { return Items.GetCount(); }
+    };
+
     UnionStringRange<T> RegexSearch( const UnionString& mask, uint pos = 0 ) const;
     Array<UnionStringRange<T>> RegexSearchAll( const UnionString& mask ) const;
-    UnionString RegexMatch( const UnionString& mask ) const;
+    Match RegexMatch( const UnionString& mask ) const;
     bool RegexIsMatchesMask( const UnionString& mask ) const;
     UnionString<T>& RegexReplace( const UnionString& mask, const UnionString& to );
 #pragma region
@@ -212,11 +232,8 @@ namespace Union {
     void SetEOL( char* eol );
     bool ReadFromFile( const char* fileName, int defaultEncoding = Encodings::ANSI );
     bool ReadFromFile( const wchar* fileName, int defaultEncoding = Encodings::ANSI );
-#ifdef __UNION_VDFS_H__
-#define __UNION_STRING_VDFS_
     bool ReadFromVDFS( const char* fileName, int defaultEncoding = Encodings::ANSI );
     bool ReadFromVDFS( const wchar* fileName, int defaultEncoding = Encodings::ANSI );
-#endif
     bool ReadFromFile( Stream* file, int defaultEncoding = Encodings::ANSI );
     bool WriteToFile( const char* fileName, int encoding = (-1) );
     bool WriteToFile( const wchar* fileName, int encoding = (-1) );
@@ -224,7 +241,11 @@ namespace Union {
 #pragma endregion
 
 #pragma region statics
-    static UnionString Format( const T* format, ... );
+    static UnionString FormatRaw( const T* format, ... );
+    template<typename... Args>
+    static UnionString Format( const T* format, Args... args );
+    static UnionString Format( const T* format );
+
     static UnionString MakeHexadecimal( void* address );
     static UnionString MakeHexadecimal( int digit );
     static UnionString MakeHexadecimal( uint digit );
@@ -389,6 +410,17 @@ namespace Union {
 
 
   template<typename T>
+  UnionString<T>::UnionString( const T* c_str0, const T* c_str1 ) {
+    Range = UINT_MAX;
+    Data = nullptr;
+    Reserved = 0;
+    Length = (uint)c_str1 - (uint)c_str0;
+    Allocate();
+    str_copy( Data, c_str0, Length );
+  }
+
+
+  template<typename T>
   UnionString<T>::UnionString( const T* c_str, uint length ) {
     Range = UINT_MAX;
     Data = nullptr;
@@ -415,6 +447,36 @@ namespace Union {
     
     str_copy( Data, (const T*)_lpStrT( "0x00" ), Length );
     str_copy( Data + (Length - bufferLength), buffer, bufferLength );
+  }
+
+
+  template<typename T>
+  UnionString<T>::UnionString( void* value ) {
+#ifdef _M_X64
+    T buffer[65];
+    int64_to_str( (int64)value, buffer, 65, 16 );
+    for( int i = 0; buffer[i]; i++ )
+      buffer[i] = char_to_upper( buffer[i] );
+
+    Range = UINT_MAX;
+    Data = nullptr;
+    Reserved = 0;
+    Length = str_get_length( buffer );
+    Allocate();
+    str_copy( Data, buffer, Length );
+#else
+    T buffer[33];
+    int_to_str( (int)value, buffer, 33, 16 );
+    for( int i = 0; buffer[i]; i++ )
+      buffer[i] = char_to_upper( buffer[i] );
+
+    Range = UINT_MAX;
+    Data = nullptr;
+    Reserved = 0;
+    Length = str_get_length( buffer );
+    Allocate();
+    str_copy( Data, buffer, Length );
+#endif
   }
 
 
@@ -856,9 +918,18 @@ namespace Union {
 
   template<>
   inline int UnionString<char>::StdPrint() const {
+    SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
     DWORD dw;
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     return dw;
+  }
+
+
+  template<>
+  inline int UnionString<char>::StdPrint( int messageLevel ) const {
+    return messageLevel <= GetMessageLevel() ?
+      StdPrint() :
+      0;
   }
 
 
@@ -871,11 +942,28 @@ namespace Union {
 
 
   template<>
+  inline int UnionString<wchar>::StdPrint( int messageLevel ) const {
+    return messageLevel <= GetMessageLevel() ?
+      StdPrint() :
+      0;
+  }
+
+
+  template<>
   inline int UnionString<char>::StdPrintLine() const {
+    SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
     DWORD dw;
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), "\n", 1, &dw, nullptr );
     return dw;
+  }
+
+
+  template<>
+  inline int UnionString<char>::StdPrintLine( int messageLevel ) const {
+    return messageLevel <= GetMessageLevel() ?
+      StdPrintLine() :
+      0;
   }
 
 
@@ -885,6 +973,34 @@ namespace Union {
     WriteConsoleW( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     WriteConsoleW( GetStdHandle( STD_OUTPUT_HANDLE ), "\n", 1, &dw, nullptr );
     return dw;
+  }
+
+
+  template<>
+  inline int UnionString<wchar>::StdPrintLine( int messageLevel ) const {
+    return messageLevel <= GetMessageLevel() ?
+      StdPrintLine() :
+      0;
+  }
+
+
+  template<typename T>
+  void UnionString<T>::StdSetCodepage( int codepage ) {
+    SetConsoleOutputCP( codepage );
+    SetConsoleCP( codepage );
+  }
+
+
+  template<typename T>
+  void UnionString<T>::SetMessageLevel( int messageLevel ) {
+    GetMessageLevel() = messageLevel;
+  }
+
+
+  template<typename T>
+  int& UnionString<T>::GetMessageLevel() {
+    static int* level = (int*)CreateSharedSingleton( "MessageLevel", []() -> void* { return new int( 0 ); } );
+    return *level;
   }
 #endif
 #pragma endregion
@@ -925,6 +1041,24 @@ namespace Union {
   template<typename T>
   bool UnionString<T>::IsEmpty() const {
     return Length == 0;
+  }
+
+
+  template<typename T>
+  bool UnionString<T>::IsBlank() const {
+    for( size_t i = 0; i < Length; i++ ) {
+      bool isBlank =
+        Data[i] == ' ' ||
+        Data[i] == '\t' ||
+        Data[i] == '\r' ||
+        Data[i] == '\n' ||
+        Data[i] == '\0';
+
+      if( !isBlank )
+        return false;
+    }
+
+    return true;
   }
 
 
@@ -1095,6 +1229,35 @@ namespace Union {
     }
 
     return count;
+  }
+
+
+  template<typename T>
+  template<typename _Lambda>
+  void UnionString<T>::WalkThroughLines( _Lambda proc /*void(*proc)(const UnionString<T>&)*/ ) {
+    const T* start = Data;
+    const T* end = Data;
+    while( true ) {
+      if( *end == '\r' || *end == '\n' || *end == '\0' ) {
+        proc( UnionString<T>( start, end ) );
+        if( *end == '\0' )
+          return;
+
+        while( true ) {
+          if( *end != '\r' && *end != '\n' ) {
+            start = end;
+            if( *end == '\0' )
+              return;
+
+            break;
+          }
+
+          end++;
+        }
+      }
+      
+      end++;
+    }
   }
 #pragma endregion
 
@@ -1989,6 +2152,8 @@ namespace Union {
         range.Data = Data;
         range.Begin = Data + pos + match.position();
         range.End = range.Begin + match.length();
+
+        // match.
       }
     }
     catch( std::regex_error e ) {}
@@ -2012,16 +2177,35 @@ namespace Union {
   }
 
   template<typename T>
-  UnionString<T> UnionString<T>::RegexMatch( const UnionString& mask ) const {
+  typename UnionString<T>::Match UnionString<T>::RegexMatch( const UnionString& pattern ) const {
+    // try {
+    //   _basic_string(T) next( begin() );
+    //   _basic_match(T) match;
+    //   _basic_regex(T) regex( mask.begin() );
+    //   if( std::regex_match( next, match, regex ) )
+    //     return match.str().c_str();
+    // }
+    // catch( std::regex_error e ) { }
+    // return UnionString::GetEmpty();
+    
+
+    Match result;
     try {
-      _basic_string(T) next( begin() );
-      _basic_match(T) match;
-      _basic_regex(T) regex( mask.begin() );
-      if( std::regex_match( next, match, regex ) )
-        return match.str().c_str();
+      // std::basic_regex<T> regexPattern( pattern.ToChar() );
+      _basic_regex( T ) regexPattern( pattern.begin() );
+      // std::match_results<const T*> regexMatch;
+      _basic_match( T ) regexMatch;
+      // std::basic_string<T, std::char_traits<T>, std::allocator<T>> input( begin() );
+      _basic_string( T ) next( begin() );
+      if( std::regex_search( next, regexMatch, regexPattern ) )
+        for( auto&& it : regexMatch )
+          result.Items.Insert( it.str().c_str());
     }
-    catch( std::regex_error e ) { }
-    return UnionString::GetEmpty();
+    catch( const std::regex_error& e ) {
+      std::cerr << "Regular expression error: " << e.what() << std::endl;
+    }
+
+    return result;
   }
 
 
@@ -2263,7 +2447,7 @@ namespace Union {
 
 #pragma region statics
   template<typename T>
-  UnionString<T> UnionString<T>::Format( const T* format, ... ) {
+  UnionString<T> UnionString<T>::FormatRaw( const T* format, ... ) {
     UnionString result;
     va_list va;
     va_start( va, format );
@@ -2415,6 +2599,41 @@ namespace Union {
 
 
   template<class T>
+  template<typename... Args>
+  static UnionString<T> UnionString<T>::Format( const T* format, Args... args ) {
+    UnionString result;
+    UnionString<T> arguments[] = { args... };
+
+    auto iterator = format;
+    while( *iterator ) {
+      if( *iterator == '{' ) {
+        if( *(++iterator) == '{' ) {
+          result.Insert( *(iterator++) );
+          continue;
+        }
+
+        auto start = iterator;
+        while( *(++iterator) && *iterator != '}' );
+        auto id = UnionString( start, iterator ).ConvertToUInt();
+        result.Insert( arguments[id] );
+      }
+      else
+        result.Insert( *iterator );
+
+      iterator++;
+    }
+
+    return result;
+  }
+
+
+  template<class T>
+  UnionString<T> UnionString<T>::Format( const T* format ) {
+    return format;
+  }
+
+  
+  template<class T>
   UnionString<T> UnionString<T>::MakeHexadecimal( void* address ) {
     return UnionString( (const T*)_lpStrT( "0x" ) ) + UnionString( (uint)address, 16 ).PadLeft( 8, '0' );
   }
@@ -2547,9 +2766,65 @@ namespace Union {
     return true;
   }
 #pragma endregion
+
+
+  template<typename T>
+  inline StringANSI ToHEX_ANSI( T* value ) {
+    return StringANSI::MakeHexadecimal( value );
+  }
+
+  template<typename T>
+  inline StringANSI ToHEX_ANSI( T value ) {
+    return StringANSI::MakeHexadecimal( value );
+  }
+
+  template<typename T>
+  inline StringUTF16 ToHEX_UTF16( T* value ) {
+    return StringUTF16::MakeHexadecimal( value );
+  }
+
+  template<typename T>
+  inline StringUTF16 ToHEX_UTF16( T value ) {
+    return StringUTF16::MakeHexadecimal( value );
+  }
+
+#ifdef _UNICODE
+#define ToHEX ToHEX_UTF16
+#else
+#define ToHEX ToHEX_ANSI
+#endif
 }
 #pragma pop_macro("max")
 #pragma pop_macro("min")
 
 #undef clamp
 #endif // __UNION_STRING_H__
+
+
+#if defined(__UNION_VDFS_H__) && defined(__UNION_CLASS_VDFS__)
+#ifndef __UNION_STRING_VDFS_
+#define __UNION_STRING_VDFS_
+namespace Union {
+  template<typename T>
+  bool UnionString<T>::ReadFromVDFS( const char* fileName, int defaultEncoding ) {
+    int systems = VDF_PHYSICAL | VDF_VIRTUAL;
+    auto file = VDFS::GetDefaultInstance().GetFile( fileName, systems );
+    if( !file )
+      return false;
+
+    auto stream = file->Open();
+    auto result = ReadFromFile( stream, defaultEncoding );
+    stream->Close();
+    return result;
+  }
+
+
+  template<typename T>
+  bool UnionString<T>::ReadFromVDFS( const wchar* fileName, int defaultEncoding ) {
+    StringANSI ansi;
+    StringConverter::UTF16ToANSI( fileName, ansi );
+    return ReadFromVDFS( ansi, defaultEncoding );
+  }
+}
+#endif // __UNION_VDFS_
+#endif // defined(__UNION_VDFS_H__) && defined(__UNION_CLASS_VDFS__)

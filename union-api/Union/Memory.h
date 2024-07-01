@@ -11,15 +11,16 @@ namespace Union {
 #if (defined(_UNION_API_LIB) || defined(_UNION_API_DLL)) && !defined(_UNION_API_BUILD)
 #pragma comment(lib,"UnionApi.lib")
 #endif
-  UNION_API void* CreateSharedSingleton( const char* globalName, void* (*allocation)() );
-  UNION_API void* FreeSharedSingleton( const char* globalName, void* (*allocation)() );
 
-  UNION_API void* MemAlloc( size_t size );
-  UNION_API void* MemCalloc( size_t count, size_t size );
-  UNION_API void* MemRealloc( void* memory, size_t size );
-  UNION_API void MemFree( void* memory );
-  UNION_API void MemDelete( void* memory );
-  UNION_API size_t MemSize( void* memory );
+  /* UNION_API */ void* CreateSharedSingleton( const char* globalName, void* (*allocation)() );
+  /* UNION_API */ void FreeSharedSingleton( const char* globalName, void* (*allocation)() );
+
+  /* UNION_API */ void* MemAlloc( size_t size );
+  /* UNION_API */ void* MemCalloc( size_t count, size_t size );
+  /* UNION_API */ void* MemRealloc( void* memory, size_t size );
+  /* UNION_API */ void MemFree( void* memory );
+  /* UNION_API */ void MemDelete( void* memory );
+  /* UNION_API */ size_t MemSize( void* memory );
 }
 
 

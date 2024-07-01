@@ -1,8 +1,8 @@
 # Union API
 
-Union API is the core of Union Framework that provides an API to create native plugins for Gothic games based on ZenGine. Native plugins can use Union API to access the game objects in memory and hook any function using the [Decorator pattern](https://refactoring.guru/design-patterns/decorator) to extend and modify ZenGine behavior to a large extent.
+Union API is the core of Union Framework that provides an API to create native plugins for Gothic games based on ZenGin. Native plugins can use Union API to access the game objects in memory and hook any function using the [Decorator pattern](https://refactoring.guru/design-patterns/decorator) to extend and modify ZenGin behavior to a large extent.
 
-The complementary [Gothic API](https://gitlab.com/union-framework/gothic-api) repository contains ZenGine headers with a mapping to the memory address for each supported Gothic release.
+The complementary [Gothic API](https://gitlab.com/union-framework/gothic-api) repository contains ZenGin headers with a mapping to the memory address for each supported Gothic release.
 
 ## Project status
 
@@ -39,3 +39,10 @@ If you have found a bug, please [create an issue](https://gitlab.com/union-frame
 ## License
 
 Union API is licensed under [GNU GENERAL PUBLIC LICENSE Version 3](https://gitlab.com/union-framework/union-api/-/blob/main/LICENSE).
+
+### Third-party Licenses
+
+* Detours [MIT License (c) Microsoft Corporation](union-api/Libs/licenses/Detours_LICENSE) - https://github.com/microsoft/Detours
+* libogg [BSD 3-Clause License (c) 2002, Xiph.org Foundation](union-api/Libs/licenses/libogg_LICENSE) - https://github.com/xiph/ogg
+* Vorbis [BSD 3-Clause License (c) 2002, Xiph.org Foundation](union-api/Libs/licenses/Vorbis_LICENSE) - https://github.com/xiph/vorbis
+* zlib [zlib License (C) 1995-2023 Jean-loup Gailly and Mark Adler](union-api/Libs/licenses/zlib_LICENSE) - https://zlib.net/

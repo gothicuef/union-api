@@ -3,11 +3,13 @@
 ################################################################################
 
 /.vs
-/DLL
-/LIB
 /union-api/DLL
+/union-api/DLLd
 /union-api/LIB
-/EXE
-/EXEd
+/union-api/LIBd
 /union-api/EXE
 /union-api/EXEd
+/DLL
+/EXE
+/EXEd
+/LIB

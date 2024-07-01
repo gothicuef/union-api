@@ -1,4 +1,4 @@
-#pragma once
+
 #ifndef __UNION_VDFS_H__
 #define __UNION_VDFS_H__
 #pragma warning(push)
@@ -37,8 +37,9 @@ namespace Union {
      * The last error from the vdfs methods
      */
     StringANSI LastError;
+    StringANSI InitialDirectory;
 
-    class File {
+    class UNION_API File {
       friend class VDFS;
       Stream* BaseStream;
       bool Zipped;
@@ -110,7 +111,7 @@ namespace Union {
       static int Sortion_ByNameStringed( File* const& l, StringANSI const& r );
     };
 
-    class Volume {
+    class UNION_API Volume {
       friend class VDFS;
       Stream* BaseStream;
       StringANSI FullName;
@@ -206,6 +207,11 @@ namespace Union {
      */
     const Array<const Volume*>& GetVolumes() const;
     /**
+     * @brief Returns initial directory
+     * @return The full path to the initial directory
+     */
+    StringANSI GetInitialDirectory() const;
+    /**
      * @brief Loads files from specified firectory
      */
     void PostLoadDirectoryFiles( const StringANSI& directory );
@@ -297,7 +303,6 @@ namespace Union {
   };
 
 
-#if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
 #pragma region vdfs_api
   /**
    * @brief Opens a virtual file to read
@@ -310,7 +315,7 @@ namespace Union {
     const VDFS::File* file = VDFS::GetDefaultInstance().GetFile( fileName, systems );
     if( file == nullptr ) {
       VDFS::GetDefaultInstance().LastError =
-        StringANSI::Format( "vdf_open: file not found -> '%s'", fileName );
+        StringANSI::Format( "vdf_open: file not found -> '{0}'", fileName );
       return -1;
     }
 
@@ -393,7 +398,7 @@ namespace Union {
     VDFS::GetDefaultInstance().GetFile( fileName, systems );
     if( systems == 0 ) {
       VDFS::GetDefaultInstance().LastError =
-        StringANSI::Format( "vdf_fexists: file not found -> '%s'", fileName );
+        StringANSI::Format( "vdf_fexists: file not found -> '{0}'", fileName );
     }
     return systems;
   }
@@ -409,7 +414,7 @@ namespace Union {
     const VDFS::File* file = VDFS::GetDefaultInstance().GetFile( fileName, systems );
     if( file == nullptr ) {
       VDFS::GetDefaultInstance().LastError =
-        StringANSI::Format( "vdf_searchfile: file not found -> '%s'", fileName );
+        StringANSI::Format( "vdf_searchfile: file not found -> '{0}'", fileName );
       return 0;
     }
 
@@ -445,6 +450,7 @@ namespace Union {
 #pragma endregion
 
 
+#if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
 #pragma region vdfs_file
   inline VDFS::File::File() {
     BaseStream = nullptr;
@@ -557,14 +563,14 @@ namespace Union {
         size_t savPos = BaseStream->GetPosition();
         size_t nextPos = 296 + 80 * entry.Position;
         BaseStream->SetPosition( nextPos );
-        ReadNextEntry( StringANSI::Format( "%s%s\\", dir, name ) );
+        ReadNextEntry( StringANSI::Format( "{0}{1}\\", dir, name ) );
         BaseStream->SetPosition( savPos );
       }
       else {
         File* file = new File();
         file->BaseStream = BaseStream;
         file->Zipped = Flags == ZIPPED_VOLUME_FLAG;
-        file->FullName = StringANSI::Format( "%s%s", dir, name );
+        file->FullName = StringANSI::Format( "{0}{1}", dir, name );
         file->FullNameVirtual = file->FullName;
         file->Name = name;
         file->Position = entry.Position;
@@ -844,6 +850,11 @@ namespace Union {
   }
 
 
+  inline StringANSI VDFS::GetInitialDirectory() const {
+    return InitialDirectory;
+  }
+
+
   inline void VDFS::LoadDirectoryVDF( const StringANSI& rootDirectory ) {
     if( !rootDirectory.IsExistsAsDirectory() )
       return;
@@ -854,7 +865,7 @@ namespace Union {
       do {
         StringANSI fileName = StringANSI( findData.cFileName ).MakeUpper();
         if( fileName.EndsWith( ".VDF" ) || fileName.EndsWith( ".MOD" ) )
-          LoadVolume( StringANSI::Format( "%s\\%s", rootDirectory, fileName ) );
+          LoadVolume( StringANSI::Format( "{0}\\{1}", rootDirectory, fileName ) );
       }
       while( ::FindNextFileA( findHandle, &findData ) );
       FindClose( findHandle );
@@ -863,11 +874,11 @@ namespace Union {
 
 
   inline void VDFS::LoadDirectoryFiles( const StringANSI& rootDirectory, const StringANSI& localDirectory ) {
-    if( !StringANSI::Format( "%s%s", rootDirectory, localDirectory ).IsExistsAsDirectory() )
+    if( !StringANSI::Format( "{0}{1}", rootDirectory, localDirectory ).IsExistsAsDirectory() )
       return;
 
     WIN32_FIND_DATAA findData;
-    StringANSI searchFilter = StringANSI::Format( "%s%s*.*", rootDirectory, localDirectory );
+    StringANSI searchFilter = StringANSI::Format( "{0}{1}*.*", rootDirectory, localDirectory );
     HANDLE findHandle = ::FindFirstFileA( searchFilter, &findData );
     if( findHandle != INVALID_HANDLE_VALUE ) {
       do {
@@ -876,12 +887,12 @@ namespace Union {
           continue;
 
         if( findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY ) {
-          LoadDirectoryFiles( rootDirectory, StringANSI::Format( "%s%s\\", localDirectory, fileName ) );
+          LoadDirectoryFiles( rootDirectory, StringANSI::Format( "{0}{1}\\", localDirectory, fileName ) );
         }
         else {
           File* file = new File();
-          file->FullName = (localDirectory + fileName).GetCopy().MakeUpper();
-          file->FullNameVirtual = file->FullName;
+          file->FullNameVirtual = (localDirectory + fileName).GetCopy().MakeUpper();
+          file->FullName = InitialDirectory + file->FullNameVirtual;
           file->Name = fileName.GetCopy().MakeUpper();
           
           Physical.Files_ByFullName.Insert<File::Sortion_ByFullName>( file );
@@ -913,7 +924,6 @@ namespace Union {
 
 
   inline void VDFS::InitDefault() {
-    StringANSI rootDirectory;
     StringANSI localSystemDirectory = "SYSTEM\\";
     StringANSI localSavesDirectory = "SAVES\\";
 
@@ -924,11 +934,11 @@ namespace Union {
     memset( moduleFileName.ToChar(), 0, 1024 );
     GetModuleFileNameA( mainModule, moduleFileName.ToChar(), moduleFileName.GetLength() );
     StringANSI fileDirectory = moduleFileName.GetCopy().GetDirectory();
-    rootDirectory = fileDirectory.GetCopy().GetDirectory();
-    StringANSI::Format( "Start VDFS initialization in %s", rootDirectory ).StdPrintLine();
+    InitialDirectory = fileDirectory.GetCopy().GetDirectory();
+    StringANSI::Format( "Start VDFS initialization in {0}", InitialDirectory ).StdPrintLine();
 
-    localSystemDirectory = (fileDirectory - rootDirectory).MakeUpper();
-    StringANSI::Format( "Work System directory: %s", localSystemDirectory ).StdPrintLine();
+    localSystemDirectory = (fileDirectory - InitialDirectory).MakeUpper();
+    StringANSI::Format( "Work System directory: {0}", localSystemDirectory ).StdPrintLine();
 
     // Get current saves directory from ini name
     StringANSI commandLine = GetCommandLineA();
@@ -937,24 +947,24 @@ namespace Union {
       int start = gameId + 6;
       StringANSI gameName = commandLine.GetWordSmart( 1, start );
       if( gameName != "GothicGame" )
-        localSavesDirectory = StringANSI::Format( "SAVES_%s\\", gameName );
+        localSavesDirectory = StringANSI::Format( "SAVES_{0}\\", gameName );
     }
 
-    StringANSI::Format( "Saves directory: %s", localSavesDirectory ).StdPrintLine();
+    StringANSI::Format( "Saves directory: {0}", localSavesDirectory ).StdPrintLine();
 
     // Load vdf and mod volumes
-    LoadDirectoryVDF( rootDirectory + "DATA\\" );
-    LoadDirectoryVDF( rootDirectory + "DATA\\PATCHES\\" );
-    LoadDirectoryVDF( rootDirectory + "DATA\\PLUGINS\\" );
+    LoadDirectoryVDF( InitialDirectory + "DATA\\" );
+    LoadDirectoryVDF( InitialDirectory + "DATA\\PATCHES\\" );
+    LoadDirectoryVDF( InitialDirectory + "DATA\\PLUGINS\\" );
 
     // Load physical file list
-    LoadDirectoryFiles( rootDirectory, localSystemDirectory );
-    LoadDirectoryFiles( rootDirectory, localSavesDirectory );
-    LoadDirectoryFiles( rootDirectory, "_WORK\\" );
+    LoadDirectoryFiles( InitialDirectory, localSystemDirectory );
+    LoadDirectoryFiles( InitialDirectory, localSavesDirectory );
+    LoadDirectoryFiles( InitialDirectory, "_WORK\\" );
 
-    StringANSI::Format( "Loaded volumes count:       %i", Volumes.GetCount() ).StdPrintLine();
-    StringANSI::Format( "Total virtual files count:  %i", Virtual.Files_ByFullName.GetCount() ).StdPrintLine();
-    StringANSI::Format( "Total physical files count: %i", Physical.Files_ByFullName.GetCount() ).StdPrintLine();
+    StringANSI::Format( "Loaded volumes count:       {0}", Volumes.GetCount() ).StdPrintLine();
+    StringANSI::Format( "Total virtual files count:  {0}", Virtual.Files_ByFullName.GetCount() ).StdPrintLine();
+    StringANSI::Format( "Total physical files count: {0}", Physical.Files_ByFullName.GetCount() ).StdPrintLine();
 
     // If current system name is not 'system', virtual names
     // for all files should be replaced to the 'system'.
@@ -1054,31 +1064,9 @@ namespace Union {
     Close();
   }
 #pragma endregion
-
-
-#pragma region string_extension
-#ifdef __UNION_STRING_VDFS_
-  template<typename T>
-  bool UnionString<T>::ReadFromVDFS( const char* fileName, int defaultEncoding ) {
-    int handle = vdf_fopen( fileName, VDF_VIRTUAL | VDF_PHYSICAL );
-    if( handle == -1 )
-      return false;
-
-    Stream* stream = reinterpret_cast<Stream*>( handle );
-    return ReadFromFile( stream, defaultEncoding );
-  }
-
-
-  template<typename T>
-  bool UnionString<T>::ReadFromVDFS( const wchar* fileName, int defaultEncoding ) {
-    StringANSI ansi;
-    StringConverter::UTF16ToANSI( fileName, ansi );
-    return ReadFromVDFS( ansi, defaultEncoding );
-  }
-#endif
-#pragma endregion
-#endif
+#endif // !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
 }
-
 #pragma warning(pop)
+
+#define __UNION_CLASS_VDFS__
 #endif // __UNION_VDFS_H__

@@ -106,7 +106,7 @@ namespace Union {
   inline bool Updater::ExtractPackage( const StringANSI& packageFileName, const StringANSI& outputDirectory, Array<StringANSI>* extractedFileList ) {
     FileReader reader( packageFileName );
     if( !reader.IsOpened() ) {
-      StringANSI::Format( "Cannot open archive: %s", packageFileName ).StdPrintLine();
+      StringANSI::Format( "Cannot open archive: {0}", packageFileName ).StdPrintLine();
       return false;
     }
 
@@ -139,7 +139,7 @@ namespace Union {
 
       // Normal file signature
       if( header.signature[0] != 'P' || header.signature[1] != 'K' || header.signature[2] != 3 || header.signature[3] != 4 ) {
-        StringANSI::Format( "Unsupported zip format. Signature: %c %c %B %B",
+        StringANSI::FormatRaw( "Unsupported zip format. Signature: %c %c %B %B",
           header.signature[0], header.signature[1], header.signature[2], header.signature[3] ).StdPrintLine();
         return false;
       }
@@ -176,7 +176,7 @@ namespace Union {
         int status = inflate( &stream, Z_FINISH );
         inflateEnd( &stream );
         if( status != Z_STREAM_END ) {
-          StringANSI::Format( "Failed to decompress file: %s", fileName ).StdPrintLine();
+          StringANSI::Format( "Failed to decompress file: {0}", fileName ).StdPrintLine();
           return false;
         }
       }
@@ -185,12 +185,12 @@ namespace Union {
         compressedData = nullptr;
       }
 
-      StringANSI outputFileName = StringANSI::Format( "%s\\%s", outputDirectory, fileName ).Replace( "/", "\\" );
+      StringANSI outputFileName = StringANSI::Format( "{0}\\{1}", outputDirectory, fileName ).Replace( "/", "\\" );
       outputFileName.GetDirectory().CreateDirectory();
 
       FileWriter writer( outputFileName );
       if( !writer.IsOpened() ) {
-        StringANSI::Format( "Cannot open file to write: %s", outputFileName ).StdPrintLine();
+        StringANSI::Format( "Cannot open file to write: {0}", outputFileName ).StdPrintLine();
         delete[] uncompressedData;
         if( compressedData )
           delete[] compressedData;
@@ -219,7 +219,7 @@ namespace Union {
 
 
   inline StringANSI UpdaterGitHub::GetLatestVersion() {
-    StringANSI url = StringANSI::Format( "/repos/%s/%s/%t", GitOwner, RepoName, "releases/latest" );
+    StringANSI url = StringANSI::Format( "/repos/{0}/{1}/{2}", GitOwner, RepoName, "releases/latest" );
     StringANSI response = HttpRequest( url, "api.github.com" );
     if( response.IsEmpty() )
       return response;
@@ -229,7 +229,7 @@ namespace Union {
 
 
   inline bool UpdaterGitHub::QueryLatestVersion( StringANSI& downloadUrl, StringANSI& version, StringANSI& releaseId, StringANSI& fileName ) {
-    StringANSI url = StringANSI::Format( "/repos/%s/%s/%t", GitOwner, RepoName, "releases/latest" );
+    StringANSI url = StringANSI::Format( "/repos/{0}/{1}/{2}", GitOwner, RepoName, "releases/latest" );
     StringANSI response = HttpRequest( url, "api.github.com" );
     if( response.IsEmpty() )
       return false;
@@ -243,7 +243,7 @@ namespace Union {
 
 
   inline int UpdaterGitHub::DownloadRelease( const StringANSI& version, const StringANSI& inFileName, Stream& outStream, void(*callback)(int, int) ) {
-    StringANSI downloadUrl = StringANSI::Format( "https://github.com/%s/%s/releases/download/%s/%s", GitOwner, RepoName, version, inFileName );
+    StringANSI downloadUrl = StringANSI::Format( "https://github.com/{0}/{1}/releases/download/{2}/{3}", GitOwner, RepoName, version, inFileName );
     return DownloadPackage( downloadUrl, outStream, callback );
   }
 

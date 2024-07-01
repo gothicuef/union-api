@@ -1,0 +1,87 @@
+stages:
+  - build
+  - release
+
+.build:base:
+  stage: build
+  tags:
+    - windows
+  when: manual
+  before_script:
+    - function loadenv() { foreach($line in Get-Content $args[0]) { if($line -match "^(.*?)=(.*)$") { Set-Content "env:\$($matches[1])" $matches[2] } } };
+  script:
+    - cmd /c " `"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\Common7\Tools\VsMSBuildCmd.bat`" && set > `"vs.env`" "
+    - loadenv vs.env
+    - msbuild union-api/union-api.vcxproj /p:Configuration=${TARGET} /p:Platform=x86 /p:PlatformToolset=v142
+    - xcopy union-api\${TARGET} ${TARGET}\
+  after_script:
+    - Add-Content -Path job.env -Value "${TARGET}_JOB_ID=${CI_JOB_ID}"
+  artifacts:
+    name: ${TARGET}
+    expire_in: never
+    reports:
+      dotenv: job.env
+
+build:DLL:
+    extends: .build:base
+    variables:
+        TARGET: "DLL"
+    artifacts:
+      paths:
+        - DLL/UnionAPI.dll
+        - DLL/UnionAPI.pdb
+      
+
+build:DLLd:
+    extends: .build:base
+    variables:
+        TARGET: "DLLd"
+    artifacts:
+      paths:
+        - DLLd/UnionAPI.dll
+        - DLLd/UnionAPI.pdb
+
+build:LIB:
+    extends: .build:base
+    variables:
+        TARGET: "LIB"
+    artifacts:
+      paths:
+        - LIB/UnionAPI.lib
+        - LIB/UnionAPI.pdb
+
+build:LIBd:
+    extends: .build:base
+    variables:
+        TARGET: "LIBd"
+    artifacts:
+      paths:
+        - LIBd/UnionAPI.lib
+        - LIBd/UnionAPI.pdb
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  when: manual
+  needs: [build:DLL, build:DLLd, build:LIB, build:LIBd]
+  variables:
+    TAG: '0.1'
+  script:
+    - echo "Create Release $TAG"
+  release:
+    tag_name: '$TAG'
+    description: "./CHANGELOG.md"
+    assets:
+      links:
+        - name: "DLL"
+          url: "$CI_PROJECT_URL/-/jobs/${DLL_JOB_ID}/artifacts/download"
+          link_type: "package"
+        - name: "DLLd"
+          url: "$CI_PROJECT_URL/-/jobs/${DLLd_JOB_ID}/artifacts/download"
+          link_type: "package"
+        - name: "LIB"
+          url: "$CI_PROJECT_URL/-/jobs/${LIB_JOB_ID}/artifacts/download"
+          link_type: "package"
+        - name: "LIBd"
+          url: "$CI_PROJECT_URL/-/jobs/${LIBd_JOB_ID}/artifacts/download"
+          link_type: "package"

@@ -44,6 +44,7 @@ namespace Union {
     virtual void* GetReturnAddress();
     static void UpdateInRange( void* where, size_t size );
     static void UpdateInRange( Dll* dll );
+    static void ReleaseInRange( Dll* dll, bool unpatch = false );
   };
 
 
@@ -160,6 +161,29 @@ namespace Union {
       for( auto offset : offsets ) {
         PatchOffset( offset, node->DestinationPtr );
         node->Offsets.Insert( offset );
+      }
+    }
+  }
+
+
+  inline void HookProviderPatch::ReleaseInRange( Dll* dll, bool unpatch ) {
+    auto& imm = ProcessImm32Collection::GetInstance();
+    auto hooks = GetHookList();
+    for( auto hook : hooks ) {
+      Array<void*> addresses, offsets;
+      auto node = hook->GetLast();
+      imm.GetImm32For( node->OriginalPtr, dll, addresses, offsets );
+
+      for( auto address : addresses ) {
+        if( unpatch )
+          PatchAddress( address, node->OriginalPtr );
+        node->Addresses.Remove( address );
+      }
+
+      for( auto offset : offsets ) {
+        if( unpatch )
+          PatchOffset( offset, node->OriginalPtr );
+        node->Offsets.Remove( offset );
       }
     }
   }

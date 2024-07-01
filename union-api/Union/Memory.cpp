@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <malloc.h>
 #include <psapi.h>
+#include "LDR.h"
 #include "Types.h"
 #include "Memory.h"
 #include "Dll.h"
@@ -39,6 +40,7 @@ namespace Union {
     MsizeFunction Msize;
 
     SharedMemory();
+    void InitializeLDR();
     virtual int SearchSingleton( const char* singletonName );
     virtual void Insert( const char* singletonName, void* address );
     virtual void* Share( const char* singletonName );
@@ -47,6 +49,7 @@ namespace Union {
     void operator delete(void* memory);
     static void InitializeInstance();
     static void InitializeDll();
+    static void __stdcall DllLoadCallback( ulong notificationReason, PLDR_DLL_NOTIFICATION_DATA notificationData, void* context );
     static SharedMemory& GetInstance();
   };
 
@@ -62,7 +65,7 @@ namespace Union {
     Free    = &free;
     Msize   = &_msize;
 
-    HMODULE module = GetModuleHandle( "shw32.dll" );
+    HMODULE module = GetModuleHandleA( "shw32.dll" );
     if( module /*&& module != Dll::FindNearestModule()*/ ) {
       void* shi_functions[] = {
         GetProcAddress( module, "shi_malloc" ),
@@ -200,7 +203,58 @@ namespace Union {
     }
     
     UnionSharedMemoryInstance = new SharedMemory();
-    StringANSI::Format( "New shared memory was initialized: %x", UnionSharedMemoryInstance ).StdPrintLine();
+    StringANSI::Format( "New shared memory was initialized: {0}",
+      ToHEX( UnionSharedMemoryInstance ) ).StdPrintLine();
+
+    UnionSharedMemoryInstance->InitializeLDR();
+  }
+
+
+  void SharedMemory::InitializeLDR() {
+    PVOID registrationHandle;
+    NTSTATUS status = LdrRegisterDllNotification( 0, DllLoadCallback, NULL, &registrationHandle );
+  }
+
+
+  void SharedMemory::DllLoadCallback( ulong notificationReason, PLDR_DLL_NOTIFICATION_DATA notificationData, void* context ) {
+    static StringUTF16 gameDirectory = [] {
+      wchar_t moduleFileName[2048];
+      GetModuleFileNameW( GetModuleHandleW( nullptr ), moduleFileName, sizeof( moduleFileName ) / sizeof( wchar_t ) - 1 );
+      return StringUTF16( moduleFileName ).GetDirectory().GetDirectory();
+      }();
+
+      switch( notificationReason ) {
+      case LDR_DLL_NOTIFICATION_REASON_LOADED:
+      {
+        StringUTF16 dllPath = notificationData->Loaded.FullDllName->Buffer;
+        if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
+          StringUTF16::Format( L"[+] {0}", dllPath ).StdPrintLine();
+          auto dll = Dll::Find( notificationData->Loaded.DllBase );
+          if( !ProcessImm32Collection::GetInstance().IsInCollection( dll ) ) {
+            ProcessImm32Collection::GetInstance().AnalizeModule( dll );
+            HookProviderPatch::UpdateInRange( dll );
+          }
+        }
+        break;
+      }
+      case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
+      {
+        StringUTF16 dllPath = notificationData->Unloaded.FullDllName->Buffer;
+        if( dllPath.StartsWith( gameDirectory, StringBase::IgnoreCase ) ) {
+          StringUTF16::Format( L"[-] {0}", dllPath ).StdPrintLine();
+          auto dll = Dll::Find( notificationData->Unloaded.DllBase );
+          if( ProcessImm32Collection::GetInstance().IsInCollection( dll ) ) {
+            HookProviderPatch::ReleaseInRange( dll );
+            ProcessImm32Collection::GetInstance().ReleaseModule( dll );
+          }
+          dll->Forget();
+        }
+        break;
+      }
+      default:
+        StringUTF16::Format( L"[?]" ).StdPrintLine();
+        break;
+      }
   }
 
 
@@ -217,49 +271,52 @@ namespace Union {
   SharedMemory& SharedMemory::GetInstance() {
     if( UnionSharedMemoryInstance == nullptr ) {
       InitializeInstance();
+#ifndef _UNION_API_BUILD
       InitializeDll();
+#endif
     }
     return *UnionSharedMemoryInstance;
   }
 
 
-  UNION_API void* MemAlloc( size_t size ) {
+// #if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
+  /* UNION_API */ void* MemAlloc( size_t size ) {
     /*static*/ auto proc = SharedMemory::GetInstance().Malloc;
     return proc( size );
   }
 
 
-  UNION_API void* MemCalloc( size_t count, size_t size ) {
+  /* UNION_API */ void* MemCalloc( size_t count, size_t size ) {
     /*static*/ auto proc = SharedMemory::GetInstance().Calloc;
     return proc( count, size );
   }
 
 
-  UNION_API void* MemRealloc( void* memory, size_t size ) {
+  /* UNION_API */ void* MemRealloc( void* memory, size_t size ) {
     /*static*/ auto proc = SharedMemory::GetInstance().Realloc;
     return proc( memory, size );
   }
 
 
-  UNION_API void MemFree( void* memory ) {
+  /* UNION_API */ void MemFree( void* memory ) {
     /*static*/ auto proc = SharedMemory::GetInstance().Free;
     return proc( memory );
   }
 
 
-  UNION_API void MemDelete( void* memory ) {
+  /* UNION_API */ void MemDelete( void* memory ) {
     /*static*/ auto proc = SharedMemory::GetInstance().Free;
     return proc( memory );
   }
 
 
-  UNION_API size_t MemSize( void* memory ) {
+  /* UNION_API */ size_t MemSize( void* memory ) {
     /*static*/ auto proc = SharedMemory::GetInstance().Msize;
     return proc( memory );
   }
 
 
-  UNION_API void* CreateSharedSingleton( const char* globalName, void* (*allocation)() ) {
+  /* UNION_API */ void* CreateSharedSingleton( const char* globalName, void* (*allocation)() ) {
     auto& memory = SharedMemory::GetInstance();
     int index = memory.SearchSingleton( globalName );
     if( index != -1 )
@@ -273,7 +330,7 @@ namespace Union {
   }
 
 
-  UNION_API void FreeSharedSingleton( const char* globalName, void(*destructor)(void*) ) {
+  /* UNION_API */ void FreeSharedSingleton( const char* globalName, void(*destructor)(void*) ) {
     auto& memory = SharedMemory::GetInstance();
     int index = memory.SearchSingleton( globalName );
     if( index == -1 )
@@ -283,4 +340,5 @@ namespace Union {
     if( address )
       destructor( address );
   }
+// #endif
 }
