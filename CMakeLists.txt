@@ -25,7 +25,6 @@ if (GENERATE_UNION_API_LIB)
 			_UNION_API_LIB
 		PRIVATE
 			_UNION_API_BUILD
-			_CRT_STDIO_ARBITRARY_WIDE_SPECIFIERS
 	)
 
 	target_include_directories(union_api_lib PUBLIC "union-api/")

@@ -5,20 +5,19 @@ include(zlib.cmake)
 
 if (GENERATE_UNION_API_LIB)
 	target_link_libraries(union_api_lib
-		PRIVATE
+		PUBLIC
 			detours
 			ogg
-			vorbis
+			vorbisfile
 			zlibstatic
 	)
 endif()
 
 if (GENERATE_UNION_API_DLL)
 	target_link_libraries(union_api_dll
-		PRIVATE
+		PUBLIC
 			detours
 			ogg
-			vorbis
 			vorbisfile
 			zlibstatic
 	)
@@ -29,7 +28,7 @@ if (GENERATE_UNION_API_EXE)
 		PRIVATE
 			detours
 			ogg
-			vorbis
+			vorbisfile
 			zlibstatic
 	)
 endif()

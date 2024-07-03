@@ -26,4 +26,9 @@ target_sources(detours
 set_property(SOURCE "detours/src/uimports.cpp" APPEND PROPERTY HEADER_FILE_ONLY true)
 
 target_include_directories(detours PUBLIC "detours/src/")
-target_compile_definitions(detours PRIVATE _X86_)
+target_compile_definitions(detours
+    PUBLIC
+        _CRT_STDIO_ARBITRARY_WIDE_SPECIFIERS
+    PRIVATE
+        _X86_
+)

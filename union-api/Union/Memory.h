@@ -8,10 +8,6 @@
 #include <iostream>
 
 namespace Union {
-#if (defined(_UNION_API_LIB) || defined(_UNION_API_DLL)) && !defined(_UNION_API_BUILD)
-#pragma comment(lib,"UnionApi.lib")
-#endif
-
   /* UNION_API */ void* CreateSharedSingleton( const char* globalName, void* (*allocation)() );
   /* UNION_API */ void FreeSharedSingleton( const char* globalName, void* (*allocation)() );
 
