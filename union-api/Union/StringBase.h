@@ -1,7 +1,9 @@
 #pragma once
 #ifndef __UNION_STRING_BASE_H__
 #define __UNION_STRING_BASE_H__
+#include <Windows.h>
 #include "Types.h"
+#include "Memory.h"
 
 #define BOM_UTF8     "\xEF\xBB\xBF"
 #define BOM_UTF16_LE "\xFF\xFE"
@@ -11,6 +13,27 @@
 #define STR_SPACES   " \t\r\n\f\v"
 
 namespace Union {
+  enum class TerminalColorUID {
+    BLACK,
+    BLUE,
+    GREEN,
+    CYAN,
+    RED,
+    PURPLE,
+    YELLOW,
+    GRAY,
+    LGRAY,
+    LBLUE,
+    LGREEN,
+    LCYAN,
+    LRED,
+    LPURPLE,
+    LYELLOW,
+    WHITE,
+    MAX
+  };
+
+
   class StringBase {
   protected:
   public:
@@ -69,6 +92,75 @@ namespace Union {
 
     virtual bool IsAnsiString() const = 0;
     virtual bool IsUnicodeString() const = 0;
+
+    static void SaveTerminalColorFG() {
+      GetSavedTerminalColorFG() = GetTerminalColorFG();
+    }
+
+    static void SaveTerminalColorBG() {
+      GetSavedTerminalColorBG() = GetTerminalColorBG();
+    }
+
+    static void SaveTerminalColors() {
+      SaveTerminalColorFG();
+      SaveTerminalColorBG();
+    }
+
+    static void LoadTerminalColorFG() {
+      SetTerminalColorFG( GetSavedTerminalColorFG() );
+    }
+
+    static void LoadTerminalColorBG() {
+      SetTerminalColorBG( GetSavedTerminalColorBG() );
+    }
+
+    static void LoadTerminalColors() {
+      LoadTerminalColorFG();
+      LoadTerminalColorBG();
+    }
+
+    static void SetTerminalColorFG( TerminalColorUID color ) {
+      GetTerminalColorFG() = color;
+      UpdateTerminalColors();
+    }
+
+    static void SetTerminalColorBG( TerminalColorUID color ) {
+      GetTerminalColorBG() = color;
+      UpdateTerminalColors();
+    }
+
+  private:
+    static TerminalColorUID& GetTerminalColorFG() {
+      static TerminalColorUID* instance =
+        (TerminalColorUID*)CreateSharedSingleton( "TerminalColorFG", []() -> void* { return new TerminalColorUID( TerminalColorUID::GRAY ); } );
+      return *instance;
+    }
+
+    static TerminalColorUID& GetTerminalColorBG() {
+      static TerminalColorUID* instance =
+        (TerminalColorUID*)CreateSharedSingleton( "TerminalColorBG", []() -> void* { return new TerminalColorUID( TerminalColorUID::BLACK ); } );
+      return *instance;
+    }
+
+    static TerminalColorUID& GetSavedTerminalColorFG() {
+      static TerminalColorUID* instance =
+        (TerminalColorUID*)CreateSharedSingleton( "SavedTerminalColorFG", []() -> void* { return new TerminalColorUID( TerminalColorUID::GRAY ); } );
+      return *instance;
+    }
+
+    static TerminalColorUID& GetSavedTerminalColorBG() {
+      static TerminalColorUID* instance =
+        (TerminalColorUID*)CreateSharedSingleton( "SavedTerminalColorBG", []() -> void* { return new TerminalColorUID( TerminalColorUID::BLACK ); } );
+      return *instance;
+    }
+
+    static void UpdateTerminalColors() {
+      auto colorFG = GetTerminalColorFG();
+      auto colorBG = GetTerminalColorBG();
+      HANDLE consoleHandle = GetStdHandle( STD_OUTPUT_HANDLE );
+      SetConsoleTextAttribute( consoleHandle, (DWORD)colorFG + ((DWORD)colorBG << 4) );
+
+    }
   };
 
   struct __lpStringT {
