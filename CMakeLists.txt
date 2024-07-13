@@ -14,11 +14,20 @@ file(GLOB_RECURSE SRC
 	"union-api/*.cpp"
 )
 
+list(REMOVE_ITEM SRC
+	"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
+)
+
 ## Union API static lib
 if (GENERATE_UNION_API_LIB)
 	add_library(union_api_lib STATIC ${SRC})
 
-	target_sources(union_api_lib PRIVATE ${SRC})
+	target_sources(union_api_lib
+		INTERFACE
+			"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
+		PRIVATE
+			${SRC}
+	)
 
 	target_compile_definitions(union_api_lib
 		PUBLIC
@@ -34,7 +43,12 @@ endif()
 if (GENERATE_UNION_API_DLL)
 	add_library(union_api_dll SHARED)
 
-	target_sources(union_api_dll PRIVATE ${SRC})
+	target_sources(union_api_dll
+		PUBLIC
+			"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
+		PRIVATE
+			${SRC}
+	)
 
 	target_compile_definitions(union_api_dll
 		PUBLIC
@@ -50,7 +64,11 @@ endif()
 if (GENERATE_UNION_API_EXE)
 	add_executable(union_api_exe)
 
-	target_sources(union_api_exe PRIVATE ${SRC})
+	target_sources(union_api_exe
+		PRIVATE
+			${SRC}
+			"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
+	)
 
 	target_compile_definitions(union_api_exe
 		PUBLIC
