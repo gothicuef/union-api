@@ -14,7 +14,7 @@
 #include "ModuleImm32Collection.h"
 
 #if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
-#include "Thirdparty/Detours.h"
+#include "Detours.h"
 #endif
 
 namespace Union {

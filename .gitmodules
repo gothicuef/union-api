@@ -1,0 +1,12 @@
+[submodule "dependencies/detours"]
+	path = dependencies/detours
+	url = https://github.com/microsoft/Detours.git
+[submodule "dependencies/zlib"]
+	path = dependencies/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "dependencies/ogg"]
+	path = dependencies/ogg
+	url = https://gitlab.xiph.org/xiph/ogg.git
+[submodule "dependencies/vorbis"]
+	path = dependencies/vorbis
+	url = https://gitlab.xiph.org/xiph/vorbis.git

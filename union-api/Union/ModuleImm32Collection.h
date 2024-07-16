@@ -12,7 +12,7 @@
 #include "Memory.h"
 #include "Dll.h"
 #if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
-#include "Thirdparty/Detours.h"
+#include "Detours.h"
 #endif
 
 #include <Windows.h>

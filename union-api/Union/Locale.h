@@ -181,6 +181,7 @@ namespace Union {
     Language = locale.Language;
     Codepage = locale.Codepage;
     memcpy( LanguageName, locale.LanguageName, sizeof( LanguageName ) );
+    SetConsoleOutputCP( (uint)Codepage );
   }
 
   inline Locale Locale::GetLocale() {

@@ -2,16 +2,5 @@
 # Данный GITIGNORE-файл был автоматически создан Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs
-/union-api/DLL
-/union-api/DLLd
-/union-api/LIB
-/union-api/LIBd
-/union-api/EXE
-/union-api/EXEd
-/DLL
-/DLLd
-/LIB
-/LIBd
-/EXE
-/EXEd
+/.vs/
+/out/

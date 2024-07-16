@@ -10,10 +10,6 @@
 #pragma comment(lib, "dbghelp.lib")
 #pragma comment(lib, "psapi.lib")
 
-#if (defined(_UNION_API_LIB) || defined(_UNION_API_DLL)) && !defined(_UNION_API_BUILD)
-#pragma comment(lib,"UnionApi.lib")
-#endif
-
 namespace Union {
   class UNION_API Dll {
   protected:

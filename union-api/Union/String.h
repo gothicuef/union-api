@@ -117,6 +117,7 @@ namespace Union {
     int ShowMessage( const T* title = _lpStrT( "" ), int flags = 0 ) const;
     int ShowMessage( int flags ) const;
     int StdPrint() const;
+    int StdRead();
     int StdPrint( int messageLevel ) const;
     int StdPrintLine() const;
     int StdPrintLine( int messageLevel ) const;
@@ -920,8 +921,21 @@ namespace Union {
   inline int UnionString<char>::StdPrint() const {
     SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
     DWORD dw;
-    WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
+    WriteConsoleA( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     return dw;
+  }
+
+
+  template<>
+  inline int UnionString<char>::StdRead() {
+    SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
+    DWORD readBytes;
+    char buffer[65536];
+    size_t length = sizeof( buffer ) - 1;
+    ReadConsoleA( GetStdHandle( STD_INPUT_HANDLE ), buffer, length, &readBytes, nullptr );
+    SetLength( readBytes );
+    memcpy( ToChar(), buffer, readBytes );
+    return readBytes;
   }
 
 
@@ -951,7 +965,6 @@ namespace Union {
 
   template<>
   inline int UnionString<char>::StdPrintLine() const {
-    SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
     DWORD dw;
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), "\n", 1, &dw, nullptr );
