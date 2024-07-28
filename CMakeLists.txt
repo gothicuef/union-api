@@ -23,9 +23,8 @@ if (GENERATE_UNION_API_LIB)
 	add_library(union_api_lib STATIC ${SRC})
 
 	target_sources(union_api_lib
-		INTERFACE
-			"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
 		PRIVATE
+			"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
 			${SRC}
 	)
 
