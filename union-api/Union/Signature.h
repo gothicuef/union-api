@@ -14,7 +14,7 @@
 namespace Union {
 #define SIGNATURE_OF(what) Signature(what, #what)
 
-  class UNION_API Signature {
+  class Signature {
     friend class SignatureFile;
     StringANSI Address;
     StringANSI TypeName;
@@ -36,6 +36,7 @@ namespace Union {
     void* GetAddress() const;
     Signature* Clone() const;
     StringANSI ToString( bool withAddress = false ) const;
+    StringANSI ToResourceString() const;
   };
 
 
@@ -221,6 +222,14 @@ namespace Union {
     return result;
   }
 
+  inline StringANSI Signature::ToResourceString() const {
+    StringANSI result = StringANSI::Format( "{0}\t{1}\t{2}\t{3}\t{4}", Address, TypeName, CallingConventionName, ClassName, FunctionName );
+
+    for( auto&& arg : ArgumentsTypeNames )
+      result.Insert( "\t" ).Insert( arg );
+
+    return result;
+  }
 
   inline void SignatureFile::ReadFromFile( const StringANSI& fileName ) {
     FileName = fileName;

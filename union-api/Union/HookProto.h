@@ -10,7 +10,7 @@ namespace Union {
 
     template<typename T>
     AnyPtr( T ptr ) {
-      VoidPtr = *(void*)&ptr;
+      VoidPtr = *(void**)&ptr;
     }
 
     operator void* () {
@@ -47,7 +47,7 @@ namespace Union {
 #define HOOKSPACE_WITH_SG_RC(nameSpace, condition, id, type) \
   static Union::HookSpace HookSpace_##nameSpace( []() -> bool { return (condition); }, id, type )
 
-#define STD_ENGINE_CHECKING GetGameVersion() == ENGINE
+#define STD_ENGINE_CHECKING (GetGameVersion() == ENGINE)
 #define STD_SG_RC_TYPE "TXT"
 
 

@@ -85,16 +85,17 @@ namespace Union {
 
 
   inline void HookProviderPatch::Detach() {
-    if( Prev ) {
-      Addresses.Swap( Prev->Addresses );
-      Offsets.Swap( Prev->Offsets );
+    Addresses.Swap( Prev->Addresses );
+    Offsets.Swap( Prev->Offsets );
+
+    if( Prev->Prev ) {
       Prev->Attach();
     }
     else {
-      for( auto address : Addresses )
+      for( auto address : Prev->Addresses )
         PatchAddress( address, OriginalPtr );
 
-      for( auto offset : Offsets )
+      for( auto offset : Prev->Offsets )
         PatchOffset( offset, OriginalPtr );
     }
   }
@@ -130,14 +131,18 @@ namespace Union {
 
       for( auto address : addresses ) {
         if( address >= where && address < whereEnd ) {
-          PatchAddress( address, node->DestinationPtr );
+          if( hook->Next )
+            PatchAddress( address, node->DestinationPtr );
+
           node->Addresses.Insert( address );
         }
       }
 
       for( auto offset : offsets ) {
         if( offset >= where && offset < whereEnd ) {
-          PatchOffset( offset, node->DestinationPtr );
+          if( hook->Next )
+            PatchOffset( offset, node->DestinationPtr );
+
           node->Offsets.Insert( offset );
         }
       }
@@ -154,12 +159,16 @@ namespace Union {
       imm.GetImm32For( node->OriginalPtr, dll, addresses, offsets );
 
       for( auto address : addresses ) {
-        PatchAddress( address, node->DestinationPtr );
+        if( hook->Next )
+          PatchAddress( address, node->DestinationPtr );
+
         node->Addresses.Insert( address );
       }
 
       for( auto offset : offsets ) {
-        PatchOffset( offset, node->DestinationPtr );
+        if( hook->Next )
+          PatchOffset( offset, node->DestinationPtr );
+        
         node->Offsets.Insert( offset );
       }
     }
@@ -223,12 +232,19 @@ namespace Union {
       tree = tree->GetLast();
       tree->Next = this;
       this->Prev = tree;
-      DetoursPtr = tree->DestinationPtr;
+
+      if( tree->Prev )
+        DetoursPtr = tree->DestinationPtr;
+
       Addresses.Swap( tree->Addresses );
       Offsets.Swap( tree->Offsets );
     }
     else {
-      GetHookList().Insert( this );
+      tree = new HookProviderPatch( *this );
+      tree->Next = this;
+      this->Prev = tree;
+
+      GetHookList().Insert( tree );
       Addresses.Clear(); // Just in case
       Offsets.Clear();   // Just in case
       ProcessImm32Collection::GetInstance().GetImm32For( from, Addresses, Offsets );
@@ -248,13 +264,7 @@ namespace Union {
     if( !IsEnabled() )
       return false;
 
-    if( !Prev ) {
-      GetHookList().Remove( this );
-      if( Next )
-        GetHookList().Insert( Next );
-    }
-    else
-      Prev->Next = Next;
+    Prev->Next = Next;
     
 
     if( Next ) {
