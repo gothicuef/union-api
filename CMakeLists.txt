@@ -42,6 +42,8 @@ endif()
 if (GENERATE_UNION_API_DLL)
 	add_library(union_api_dll SHARED)
 
+	set_target_properties(union_api_dll PROPERTIES OUTPUT_NAME UnionAPI)
+
 	target_sources(union_api_dll
 		PUBLIC
 			"${CMAKE_CURRENT_SOURCE_DIR}/union-api/Union/Memory.cpp"
