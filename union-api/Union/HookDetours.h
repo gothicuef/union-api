@@ -20,9 +20,9 @@ namespace Union {
     void* OriginalPtr;    // Hook from
     void* DestinationPtr; // Hook to
     void* DetoursPtr;     // Where to return (special detours)
-    bool Enabled;
     HookProviderDetours* Prev;
     HookProviderDetours* Next;
+    bool Enabled;
 
     static Array<HookProviderDetours*> GetHookList();
     static HookProviderDetours* GetHookTree( void* ptr );
