@@ -19,6 +19,7 @@
 
 namespace Union {
   class UNION_API HookProviderPatch : public HookProvider {
+  protected:
     void* OriginalPtr;    // Hook from
     void* DestinationPtr; // Hook to
     void* DetoursPtr;     // Where to return
@@ -168,7 +169,7 @@ namespace Union {
       for( auto offset : offsets ) {
         if( hook->Next )
           PatchOffset( offset, node->DestinationPtr );
-        
+
         node->Offsets.Insert( offset );
       }
     }
@@ -265,7 +266,7 @@ namespace Union {
       return false;
 
     Prev->Next = Next;
-    
+
 
     if( Next ) {
       Next->Prev = Prev;

@@ -4,3 +4,11 @@
 
 /.vs/
 /out/
+/DLL
+/EXE
+/EXEd
+/LIB
+/union-api/DLL
+/union-api/EXE
+/union-api/EXEd
+/union-api/LIB

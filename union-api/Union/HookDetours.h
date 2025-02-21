@@ -16,9 +16,11 @@
 
 namespace Union {
   class UNION_API HookProviderDetours : public HookProvider {
+  protected:
     void* OriginalPtr;    // Hook from
     void* DestinationPtr; // Hook to
     void* DetoursPtr;     // Where to return (special detours)
+    bool Enabled;
     HookProviderDetours* Prev;
     HookProviderDetours* Next;
 
@@ -41,6 +43,7 @@ namespace Union {
     OriginalPtr = nullptr;
     DestinationPtr = nullptr;
     DetoursPtr = nullptr;
+    Enabled = false;
     Prev = nullptr;
     Next = nullptr;
   }
@@ -61,13 +64,13 @@ namespace Union {
     for( auto Hook : hooks )
       if( Hook->OriginalPtr == ptr )
         return Hook;
-    
+
     return nullptr;
   }
 
 
   inline Array<HookProviderDetours*> HookProviderDetours::GetHookList() {
-    static Array<HookProviderDetours*>* hooks = 
+    static Array<HookProviderDetours*>* hooks =
       (Array<HookProviderDetours*>*)CreateSharedSingleton( "DetoursHookList", []() -> void* { return new Array<HookProviderDetours*>(); } );
     return hooks->Share();
   }
@@ -90,7 +93,7 @@ namespace Union {
 
 
   inline bool HookProviderDetours::IsEnabled() {
-    return DetoursPtr != nullptr;
+    return Enabled;
   }
 
 
@@ -119,6 +122,7 @@ namespace Union {
       GetHookList().Insert( this );
 
     DetourAttachOnce( &DetoursPtr, DestinationPtr );
+    Enabled = true;
     return true;
   }
 
@@ -132,27 +136,44 @@ namespace Union {
     if( !IsEnabled() )
       return false;
 
-    // Detach this object
+    // Now object can free a holded function to 
+    // return prologue to the source state
     DetourDetachOnce( &DetoursPtr, DestinationPtr );
 
-    // Remove this hook from list
-    if( Prev )
+    if( Prev ) {
       Prev->Next = Next;
-    else
+      DetoursPtr = Prev->DestinationPtr;
+    }
+    // If this object is root node of the hook
+    // tree it should be removed from list
+    else {
       GetHookList().Remove( this );
-
-    // Reattach the next object
-    if( Next ) {
-      Next->Prev = Prev;
-      DetourDetachOnce( &Next->DetoursPtr, Next->DestinationPtr );
-      Next->DetoursPtr = nullptr;
-      Next->Enable( DetoursPtr, Next->DestinationPtr );
+      DetoursPtr = OriginalPtr;
     }
 
-    // Clear a hook information
-    DetoursPtr = nullptr;
+    if( Next ) {
+      // Now we should disable the next object in this tree and
+      // connect to the Prev or the Origin object from this list
+      DetourDetachOnce( &Next->DetoursPtr, Next->DestinationPtr );
+      Next->Prev = Prev;
+
+      // Set the detours function for the next object, after
+      // that get hooked value. Now disabled provider may exit
+      // from the destination function if it was disabled from there
+      DetourAttachOnce( &DetoursPtr, Next->DestinationPtr );
+      Next->DetoursPtr = DetoursPtr;
+
+      if( Prev == nullptr )
+        GetHookList().Insert( Next );
+
+      // Triggering vfunc after manual update
+      Next->Enable();
+    }
+
     Prev = nullptr;
     Next = nullptr;
+
+    Enabled = false;
     return true;
   }
 
