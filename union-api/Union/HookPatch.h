@@ -27,6 +27,7 @@ namespace Union {
     Array<void*> Offsets;
     HookProviderPatch* Prev;
     HookProviderPatch* Next;
+    bool Enabled;
 
     static Array<HookProviderPatch*> GetHookList();
     static HookProviderPatch* GetHookTree( void* ptr );
@@ -54,6 +55,7 @@ namespace Union {
     OriginalPtr = nullptr;
     DestinationPtr = nullptr;
     DetoursPtr = nullptr;
+    Enabled = false;
     Prev = nullptr;
     Next = nullptr;
   }
@@ -169,7 +171,7 @@ namespace Union {
       for( auto offset : offsets ) {
         if( hook->Next )
           PatchOffset( offset, node->DestinationPtr );
-
+        
         node->Offsets.Insert( offset );
       }
     }
@@ -210,7 +212,7 @@ namespace Union {
 
 
   inline bool HookProviderPatch::IsEnabled() {
-    return DetoursPtr != nullptr;
+    return Enabled;
   }
 
 
@@ -252,6 +254,7 @@ namespace Union {
     }
 
     Attach();
+    Enabled = true;
     return true;
   }
 
@@ -266,7 +269,7 @@ namespace Union {
       return false;
 
     Prev->Next = Next;
-
+    
 
     if( Next ) {
       Next->Prev = Prev;
@@ -276,7 +279,7 @@ namespace Union {
       Detach();
 
     // Clear a hook information
-    DetoursPtr = nullptr;
+    Enabled = false;
     Prev = nullptr;
     Next = nullptr;
     return true;
