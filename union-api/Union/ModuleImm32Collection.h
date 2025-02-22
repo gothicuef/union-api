@@ -258,7 +258,6 @@ namespace Union {
 
 
   inline void ProcessImm32Collection::GetImm32For( void* target, ModuleImm32Collection* moduleImm32, OUT Array<void*>& addresses, OUT Array<void*>& offsets ) {
-    StringANSI::Format( "Getting Imm32 for {0}", ToHEX( target ) ).StdPrintLine();
     for( auto imm32 : moduleImm32->Addresses )
       if( *(void**)imm32 == target )
         addresses.Insert( imm32 );
@@ -275,9 +274,6 @@ namespace Union {
       if( to - from - 4 == offset )
         offsets.Insert( imm32 );
     }
-
-    StringANSI::Format( "Found\n  addresses: {0}\n  offsets: {1}",
-      addresses.GetCount(), offsets.GetCount() ).StdPrintLine();
   }
 
 

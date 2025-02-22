@@ -19,6 +19,7 @@
 
 namespace Union {
   class UNION_API HookProviderPatch : public HookProvider {
+  protected:
     void* OriginalPtr;    // Hook from
     void* DestinationPtr; // Hook to
     void* DetoursPtr;     // Where to return
@@ -26,6 +27,7 @@ namespace Union {
     Array<void*> Offsets;
     HookProviderPatch* Prev;
     HookProviderPatch* Next;
+    bool Enabled;
 
     static Array<HookProviderPatch*> GetHookList();
     static HookProviderPatch* GetHookTree( void* ptr );
@@ -53,6 +55,7 @@ namespace Union {
     OriginalPtr = nullptr;
     DestinationPtr = nullptr;
     DetoursPtr = nullptr;
+    Enabled = false;
     Prev = nullptr;
     Next = nullptr;
   }
@@ -209,7 +212,7 @@ namespace Union {
 
 
   inline bool HookProviderPatch::IsEnabled() {
-    return DetoursPtr != nullptr;
+    return Enabled;
   }
 
 
@@ -251,6 +254,7 @@ namespace Union {
     }
 
     Attach();
+    Enabled = true;
     return true;
   }
 
@@ -275,7 +279,7 @@ namespace Union {
       Detach();
 
     // Clear a hook information
-    DetoursPtr = nullptr;
+    Enabled = false;
     Prev = nullptr;
     Next = nullptr;
     return true;
