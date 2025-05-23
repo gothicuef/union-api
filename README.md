@@ -38,7 +38,7 @@ If you have found a bug, please [create an issue](https://gitlab.com/union-frame
 
 ## License
 
-Union API is licensed under [GNU GENERAL PUBLIC LICENSE Version 3](https://gitlab.com/union-framework/union-api/-/blob/main/LICENSE).
+Union API is licensed under [BSD 3-Clause](https://gitlab.com/union-framework/union-api/-/blob/main/LICENSE).
 
 ### Third-party Licenses
 
