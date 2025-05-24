@@ -9,7 +9,8 @@
 #include "Memory.h"
 #include "StringBase.h"
 #include <string>
-// #include 	<ctype.h>
+#include <cctype>
+#include <cwctype>
 
 namespace Union {
   inline size_t str_get_length( const char* str ) {
@@ -111,22 +112,24 @@ namespace Union {
 
 
   inline char char_to_upper( char sym ) {
-    return toupper( sym );
+    const auto result = std::toupper( static_cast<unsigned char>(sym) );
+    return static_cast<char>( result );
   }
 
 
   inline wchar char_to_upper( wchar sym ) {
-    return towupper( sym );
+    return std::towupper( sym );
   }
 
 
   inline char char_to_lower( char sym ) {
-    return tolower( sym );
+    const auto result = std::tolower( sym );
+    return static_cast<char>( result );
   }
 
 
   inline wchar char_to_lower( wchar sym ) {
-    return towlower( sym );
+    return std::towlower( sym );
   }
 
 
@@ -619,7 +622,7 @@ namespace Union {
 
 
 #ifdef _WINUSER_
-  inline int str_msgbox( const char* message, const char* title = "", int flags = 0 ) {
+  inline int str_msgbox( const char* message, const char* title = "", UINT flags = 0 ) {
     return MessageBoxA( 0, message, title, flags );
   }
 

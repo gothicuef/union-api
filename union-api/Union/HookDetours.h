@@ -30,6 +30,11 @@ namespace Union {
     HookProviderDetours* GetLast();
   public:
     HookProviderDetours();
+    HookProviderDetours( const HookProviderDetours& ) = default;
+    HookProviderDetours& operator=( const HookProviderDetours& ) = default;
+    HookProviderDetours( HookProviderDetours&& ) = default;
+    HookProviderDetours& operator=( HookProviderDetours&& ) = default;
+    ~HookProviderDetours() override = default;
     virtual bool IsEnabled();
     virtual bool Enable( void* originPtr, void* destPtr );
     virtual bool Enable();

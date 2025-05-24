@@ -145,7 +145,6 @@ namespace Union {
       ToHEX( end ) ).StdPrintLine();
 
     while( it < end ) {
-      byte instruction = *it;
       if( IsXCallPtr( it ) )
         xcalls.Insert( it );
 

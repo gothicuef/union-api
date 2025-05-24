@@ -51,7 +51,7 @@ namespace Union {
 
     Signature* FindSimilarSignature( Signature* sig ) const;
     static SignatureFile* GetFromFile( const StringANSI& fileName );
-    static SignatureFile* GetFromResource( int ID, const char* type );
+    static SignatureFile* GetFromResource( uint ID, const char* type );
     static Array<SignatureFile*> GetLocalSignatureFileList();
     static Array<SignatureFile*> GetGlobalSignatureFileList();
     static Signature* FindSimilarSignatureInThisHookspace( Signature* sig );
@@ -60,7 +60,7 @@ namespace Union {
     friend class HookSpace;
     static SignatureFile*& GetCurrentSignatureFile();
     static SignatureFile* SwitchCurrentSignatureFile( const StringANSI& fileName );
-    static SignatureFile* SwitchCurrentSignatureFile( int ID, const char* type );
+    static SignatureFile* SwitchCurrentSignatureFile( uint ID, const char* type );
   };
 
 
@@ -314,7 +314,7 @@ namespace Union {
   }
 
 
-  inline SignatureFile* SignatureFile::GetFromResource( int ID, const char* type ) {
+  inline SignatureFile* SignatureFile::GetFromResource( uint ID, const char* type ) {
     auto list = GetLocalSignatureFileList();
     for( auto&& it : list )
       if( it->ResourceID == ID )
@@ -361,7 +361,7 @@ namespace Union {
   }
 
 
-  inline SignatureFile* SignatureFile::SwitchCurrentSignatureFile( int ID, const char* type ) {
+  inline SignatureFile* SignatureFile::SwitchCurrentSignatureFile( uint ID, const char* type ) {
     auto signatureFile = GetFromResource( ID, type );
     GetCurrentSignatureFile() = signatureFile;
     return signatureFile;

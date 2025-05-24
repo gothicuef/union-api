@@ -32,7 +32,7 @@ namespace Union {
     bool(*Condition)();
     HookSpace( bool(*condition)() );
     HookSpace( bool(*condition)(), const String& fileName );
-    HookSpace( bool(*condition)(), int resourceID, const char* type );
+    HookSpace( bool(*condition)(), uint resourceID, const char* type );
     bool IsActive();
     static HookSpace& GetCurrentInstance();
   };
@@ -53,22 +53,31 @@ namespace Union {
 
   class UNION_API HookProvider {
   public:
+    HookProvider() = default;
+    HookProvider( const HookProvider& ) = default;
+    HookProvider& operator=( const HookProvider& ) = default;
+    HookProvider( HookProvider&& ) = default;
+    HookProvider& operator=( HookProvider&& ) = default;
     static bool CanHookThisSpace();
     virtual bool IsEnabled() = 0;
     virtual bool Enable( void* originPtr, void* destPtr ) = 0;
     virtual bool Enable() = 0;
     virtual bool Disable() = 0;
     virtual void* GetReturnAddress() = 0;
+    virtual ~HookProvider() = default;
   };
 
 
   template<typename EntryType>
   class Hook {
     HookProvider* Provider;
-    Hook() { }
+    Hook() = default;
   public:
     Hook( HookProvider* provider );
-    Hook( const Hook& other );
+    Hook( const Hook& ) = default;
+    Hook& operator=( const Hook& ) = default;
+    Hook( Hook&& ) = default;
+    Hook& operator=( Hook&& ) = default;
     bool Enable( void* originPtr, void* destPtr );
     bool Enable();
     bool Disable();
@@ -94,7 +103,7 @@ namespace Union {
   }
 
 
-  inline HookSpace::HookSpace( bool(*condition)(), int resourceID, const char* type ) {
+  inline HookSpace::HookSpace( bool(*condition)(), uint resourceID, const char* type ) {
     Condition = condition;
     GetCurrentInstance().Condition = condition;
     SignatureFile::SwitchCurrentSignatureFile( resourceID, type );
@@ -122,13 +131,6 @@ namespace Union {
   Hook<EntryType>::Hook( HookProvider* provider ) {
     Provider = provider;
   }
-
-
-  template<typename EntryType>
-  Hook<EntryType>::Hook( const Hook& other ) {
-    Provider = other.Provider;
-  }
-
 
   template<typename EntryType>
   bool Hook<EntryType>::Enable( void* originPtr, void* destPtr ) {

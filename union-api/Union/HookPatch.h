@@ -39,6 +39,11 @@ namespace Union {
     static void PatchOffset( void* where, void* what );
   public:
     HookProviderPatch();
+    HookProviderPatch(const HookProviderPatch&) = default;
+    HookProviderPatch& operator=(const HookProviderPatch&) = default;
+    HookProviderPatch(HookProviderPatch&&) = default;
+    HookProviderPatch& operator=(HookProviderPatch&&) = default;
+    ~HookProviderPatch() override = default;
     virtual bool IsEnabled();
     virtual bool Enable( void* originPtr, void* destPtr );
     virtual bool Enable();

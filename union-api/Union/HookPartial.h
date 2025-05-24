@@ -56,10 +56,10 @@ namespace Union {
     };
 #pragma pack(pop)
     Instruction* instructions = (Instruction*)ptr;
-    for( int i = 0; i < 8; i++ ) {
+    for( uint i = 0; i < 8; i++ ) {
       auto& instruction = instructions[i];
       instruction.Code = code;
-      instruction.Register = 0x05 + 8 * i;
+      instruction.Register = static_cast<byte>(0x05 + 8 * i);
       instruction.DwordPtr = (DWORD)&dwordPtrs[i];
     }
   }
@@ -77,7 +77,7 @@ namespace Union {
     *(DWORD*)&ptr[1] = dword;
   }
 
-  inline void x86_set_reg_dword( byte* ptr, int reg, DWORD dword ) {
+  inline void x86_set_reg_dword( byte* ptr, byte reg, DWORD dword ) {
     ptr[0] = 0xB8 + reg;
     *(DWORD*)&ptr[1] = dword;
   }
@@ -174,6 +174,11 @@ namespace Union {
 
   public:
     HookProviderPartial();
+    HookProviderPartial( const HookProviderPartial& ) = default;
+    HookProviderPartial& operator=( const HookProviderPartial& ) = default;
+    HookProviderPartial( HookProviderPartial&& ) = default;
+    HookProviderPartial& operator=( HookProviderPartial&& ) = default;
+    ~HookProviderPartial() override = default;
     virtual bool IsEnabled();
     virtual bool Enable( void* originPtr, void* destPtr );
     virtual bool Enable();

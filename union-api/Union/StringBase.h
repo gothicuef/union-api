@@ -37,6 +37,7 @@ namespace Union {
   class StringBase {
   protected:
   public:
+    virtual ~StringBase() = default;
     enum Flags {
       Default         = 0,
       IgnoreCase      = 1,
@@ -155,10 +156,11 @@ namespace Union {
     }
 
     static void UpdateTerminalColors() {
-      auto colorFG = GetTerminalColorFG();
-      auto colorBG = GetTerminalColorBG();
-      HANDLE consoleHandle = GetStdHandle( STD_OUTPUT_HANDLE );
-      SetConsoleTextAttribute( consoleHandle, (DWORD)colorFG + ((DWORD)colorBG << 4) );
+      const auto colorFG = static_cast<WORD>( GetTerminalColorFG() );
+      const auto colorBG = static_cast<WORD>( GetTerminalColorBG() );
+      const auto attribute = static_cast<WORD>( colorFG + (colorBG << 4) );
+      const HANDLE consoleHandle = GetStdHandle( STD_OUTPUT_HANDLE );
+      SetConsoleTextAttribute( consoleHandle, attribute );
 
     }
   };

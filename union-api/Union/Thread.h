@@ -75,7 +75,7 @@ namespace Union {
   class UNION_API Semaphore {
     HANDLE Handle;
   public:
-    Semaphore( int maximumThreads );
+    Semaphore( ulong maximumThreads );
     bool Enter();
     bool Leave();
     ~Semaphore();

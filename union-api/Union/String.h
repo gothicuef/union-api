@@ -116,11 +116,11 @@ namespace Union {
     const T* end() const;
     int ShowMessage( const T* title = _lpStrT( "" ), int flags = 0 ) const;
     int ShowMessage( int flags ) const;
-    int StdPrint() const;
-    int StdRead();
-    int StdPrint( int messageLevel ) const;
-    int StdPrintLine() const;
-    int StdPrintLine( int messageLevel ) const;
+    DWORD StdPrint() const;
+    DWORD StdRead();
+    DWORD StdPrint( int messageLevel ) const;
+    DWORD StdPrintLine() const;
+    DWORD StdPrintLine( int messageLevel ) const;
     static void StdSetCodepage( int codepage );
     static void SetMessageLevel( int messageLevel );
     static int& GetMessageLevel();
@@ -252,6 +252,8 @@ namespace Union {
     static UnionString MakeHexadecimal( uint digit );
     static UnionString MakeHexadecimal( int64 digit );
     static UnionString MakeHexadecimal( uint64 digit );
+
+    static constexpr uint npos = static_cast<uint>(-1);
 #pragma endregion
 
     static UnionString GetEmpty() { return UnionString(); }
@@ -918,7 +920,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<char>::StdPrint() const {
+  inline DWORD UnionString<char>::StdPrint() const {
     SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
     DWORD dw;
     WriteConsoleA( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
@@ -927,7 +929,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<char>::StdRead() {
+  inline DWORD UnionString<char>::StdRead() {
     SetConsoleOutputCP( (uint)Locale::GetUserLocale().Codepage );
     DWORD readBytes;
     char buffer[65536];
@@ -940,7 +942,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<char>::StdPrint( int messageLevel ) const {
+  inline DWORD UnionString<char>::StdPrint( int messageLevel ) const {
     return messageLevel <= GetMessageLevel() ?
       StdPrint() :
       0;
@@ -948,7 +950,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<wchar>::StdPrint() const {
+  inline DWORD UnionString<wchar>::StdPrint() const {
     DWORD dw;
     WriteConsoleW( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     return dw;
@@ -956,7 +958,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<wchar>::StdPrint( int messageLevel ) const {
+  inline DWORD UnionString<wchar>::StdPrint( int messageLevel ) const {
     return messageLevel <= GetMessageLevel() ?
       StdPrint() :
       0;
@@ -964,7 +966,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<char>::StdPrintLine() const {
+  inline DWORD UnionString<char>::StdPrintLine() const {
     DWORD dw;
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     WriteConsole( GetStdHandle( STD_OUTPUT_HANDLE ), "\n", 1, &dw, nullptr );
@@ -973,7 +975,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<char>::StdPrintLine( int messageLevel ) const {
+  inline DWORD UnionString<char>::StdPrintLine( int messageLevel ) const {
     return messageLevel <= GetMessageLevel() ?
       StdPrintLine() :
       0;
@@ -981,7 +983,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<wchar>::StdPrintLine() const {
+  inline DWORD UnionString<wchar>::StdPrintLine() const {
     DWORD dw;
     WriteConsoleW( GetStdHandle( STD_OUTPUT_HANDLE ), ToChar(), GetLength(), &dw, nullptr );
     WriteConsoleW( GetStdHandle( STD_OUTPUT_HANDLE ), "\n", 1, &dw, nullptr );
@@ -990,7 +992,7 @@ namespace Union {
 
 
   template<>
-  inline int UnionString<wchar>::StdPrintLine( int messageLevel ) const {
+  inline DWORD UnionString<wchar>::StdPrintLine( int messageLevel ) const {
     return messageLevel <= GetMessageLevel() ?
       StdPrintLine() :
       0;
@@ -1191,7 +1193,7 @@ namespace Union {
 
   template<typename T>
   uint UnionString<T>::Search( const T* c_str, Flags flags ) const {
-    return Search( c_str, -1, flags );
+    return Search( c_str, npos, flags );
   }
 
 
@@ -1205,12 +1207,15 @@ namespace Union {
       case Flags::IgnoreCase:
         found = str_search_ignore_case( Data, Length, pos, c_str, -1 );
         break;
-      case Flags::SearchInReverse:                     
-        found = str_search_in_reverse( Data, Length, pos, c_str, Length );
-        break;
-      case Flags::SearchInReverse + Flags::IgnoreCase: 
-        found = str_search_in_reverse_ignore_case( Data, Length, pos, c_str, Length );
-        break;
+      default:
+        if( flags & Flags::SearchInReverse ) {
+          if( flags & Flags::IgnoreCase ) {
+            found = str_search_in_reverse_ignore_case( Data, Length, pos, c_str, Length );
+          }
+          else {
+            found = str_search_in_reverse( Data, Length, pos, c_str, Length );
+          }
+        }
     }
 
     return found != nullptr ?
@@ -1229,13 +1234,13 @@ namespace Union {
   uint UnionString<T>::GetContainsCount( const T* c_str, Flags flags ) const {
     uint length = str_get_length( c_str );
     if( length == 0 )
-      return -1;
+      return npos;
 
     uint count = 0;
     uint start = 0;
-    while( start != -1 ) {
+    while( start != npos ) {
       start = Search( c_str, start, flags );
-      if( start != -1 ) {
+      if( start != npos ) {
         start += length;
         count++;
       }
@@ -2092,7 +2097,7 @@ namespace Union {
 
 
   template<>
-  inline UnionString<char> UnionString<char>::ToAnsi( int codepage ) const {
+  inline UnionString<char> UnionString<char>::ToAnsi( [[maybe_unused]] int codepage ) const {
     return *this;
   }
 
@@ -2109,7 +2114,7 @@ namespace Union {
 
 
   template<>
-  inline UnionString<wchar> UnionString<wchar>::ToUnicode( int codepage ) const {
+  inline UnionString<wchar> UnionString<wchar>::ToUnicode( [[maybe_unused]] int codepage ) const {
     return *this;
   }
 
@@ -2282,7 +2287,7 @@ namespace Union {
   template<typename T>
   int UnionString<T>::ReadFileEncoding( Stream* file, int defaultEncoding ) {
     byte bom[3] = { 0, 0, 0 };
-    size_t bomLength = file->Read( bom, 3 );
+    [[maybe_unused]] size_t bomLength = file->Read( bom, 3 );
     if( str_compare_byte_order_mark( bom, BOM_UTF8 ) ) {
       file->SetPosition( 3, SEEK_SET );
       return Encodings::UTF8;
@@ -2684,7 +2689,7 @@ namespace Union {
       return false;
     }
     StringUTF16 utf16String;
-    utf16String.SetLength( size );
+    utf16String.SetLength( static_cast<size_t>( size ) );
     if( MultiByteToWideChar( CP_UTF8, 0, input.ToChar(), -1, utf16String.ToChar(), size) == 0 ) {
       return false;
     }
@@ -2692,7 +2697,7 @@ namespace Union {
     if( ansiSize == 0 ) {
       return false;
     }
-    output.SetLength( ansiSize );
+    output.SetLength( static_cast<size_t>( ansiSize ) );
     if( WideCharToMultiByte( CP_ACP, 0, utf16String.ToChar(), -1, output.ToChar(), ansiSize, NULL, NULL) == 0 ) {
       return false;
     }
@@ -2705,7 +2710,7 @@ namespace Union {
     if( size == 0 ) {
       return false;
     }
-    output.SetLength( size );
+    output.SetLength(static_cast<size_t>( size ) );
     if( WideCharToMultiByte( CP_ACP, 0, input.ToChar(), -1, output.ToChar(), size, NULL, NULL) == 0 ) {
       return false;
     }
@@ -2717,21 +2722,21 @@ namespace Union {
     if( codepage == -1 )
       codepage = (int)Locale::GetUserLocale().Codepage;
 
-    int size = MultiByteToWideChar( codepage, 0, input.ToChar(), -1, NULL, 0 );
+    int size = MultiByteToWideChar( codepage, 0U, input.ToChar(), -1, NULL, 0 );
     if( size == 0 ) {
       return false;
     }
     StringUTF16 wideString;
-    wideString.SetLength( size );
-    if( MultiByteToWideChar( codepage, 0, input.ToChar(), -1, wideString.ToChar(), size ) == 0 ) {
+    wideString.SetLength( static_cast<size_t>( size ) );
+    if( MultiByteToWideChar( codepage, 0U, input.ToChar(), -1, wideString.ToChar(), size ) == 0 ) {
       return false;
     }
-    int utf8Size = WideCharToMultiByte( CP_UTF8, 0, wideString.ToChar(), -1, NULL, 0, NULL, NULL );
+    int utf8Size = WideCharToMultiByte( CP_UTF8, 0U, wideString.ToChar(), -1, NULL, 0, NULL, NULL );
     if( utf8Size == 0 ) {
       return false;
     }
     output.SetLength( utf8Size );
-    if( WideCharToMultiByte( CP_UTF8, 0, wideString.ToChar(), -1, output.ToChar(), utf8Size, NULL, NULL) == 0 ) {
+    if( WideCharToMultiByte( CP_UTF8, 0U, wideString.ToChar(), -1, output.ToChar(), utf8Size, NULL, NULL) == 0 ) {
       return false;
     }
     return true;
@@ -2739,12 +2744,12 @@ namespace Union {
 
 
   inline bool StringConverter::UTF16ToUTF8( const StringUTF16& input, StringUTF8& output ) {
-    int size = WideCharToMultiByte( CP_UTF8, 0, input.ToChar(), -1, NULL, 0, NULL, NULL );
+    int size = WideCharToMultiByte( CP_UTF8, 0U, input.ToChar(), -1, NULL, 0, NULL, NULL );
     if( size == 0 ) {
       return false;
     }
     output.SetLength( size );
-    if( WideCharToMultiByte( CP_UTF8, 0, input.ToChar(), -1, output.ToChar(), size, NULL, NULL) == 0 ) {
+    if( WideCharToMultiByte( CP_UTF8, 0U, input.ToChar(), -1, output.ToChar(), size, NULL, NULL) == 0 ) {
       return false;
     }
     return true;
@@ -2755,12 +2760,12 @@ namespace Union {
     if( codepage == -1 )
       codepage = (int)Locale::GetUserLocale().Codepage;
 
-    int size = MultiByteToWideChar( codepage, 0, input.ToChar(), -1, NULL, 0 );
+    int size = MultiByteToWideChar( codepage, 0U, input.ToChar(), -1, NULL, 0 );
     if( size == 0 ) {
       return false;
     }
     output.SetLength( size );
-    if( MultiByteToWideChar( codepage, 0, input.ToChar(), -1, output.ToChar(), size) == 0 ) {
+    if( MultiByteToWideChar( codepage, 0U, input.ToChar(), -1, output.ToChar(), size) == 0 ) {
       return false;
     }
     return true;
@@ -2768,12 +2773,12 @@ namespace Union {
 
 
   inline bool StringConverter::UTF8ToUTF16( const StringUTF8& input, StringUTF16& output ) {
-    int size = MultiByteToWideChar( CP_UTF8, 0, input.ToChar(), -1, NULL, 0 );
+    int size = MultiByteToWideChar( CP_UTF8, 0U, input.ToChar(), -1, NULL, 0 );
     if( size == 0 ) {
       return false;
     }
     output.SetLength( size );
-    if( MultiByteToWideChar( CP_UTF8, 0, input.ToChar(), -1, output.ToChar(), size) == 0 ) {
+    if( MultiByteToWideChar( CP_UTF8, 0U, input.ToChar(), -1, output.ToChar(), size) == 0 ) {
       return false;
     }
     return true;

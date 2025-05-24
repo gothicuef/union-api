@@ -398,7 +398,7 @@ namespace Union {
       if( Memory->Data[i] == object )
         return RemoveAt( i, fast );
 
-    return -1;
+    return static_cast<uint>( -1 );
   }
 
 
@@ -450,7 +450,7 @@ namespace Union {
       if( Memory->Data[i] == object )
         return DeleteAt( i, fast );
 
-    return -1;
+    return static_cast<uint>( -1 );
   }
 
 
@@ -513,7 +513,7 @@ namespace Union {
       if( _Compare_( Memory->Data[object_index], object ) == 0 )
         return object_index;
 
-    return -1;
+    return static_cast<uint>( -1 );
   }
 
 

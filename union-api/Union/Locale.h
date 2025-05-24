@@ -110,13 +110,14 @@ namespace Union {
   };
 
   struct UNION_API Locale {
-    LCID LanguageCodeID;
-    LANGUAGE Language;
-    CODEPAGE Codepage;
-    char LanguageName[20];
+    LCID LanguageCodeID{};
+    LANGUAGE Language{};
+    CODEPAGE Codepage{};
+    char LanguageName[20]{};
 
-    Locale();
-    void operator =( Locale locale );
+    Locale() = default;
+    Locale( const Locale& );
+    Locale& operator=( const Locale& locale );
     void SetLocale( LCID langId );
     void SetLocale( LANGUAGE lang );
     static Locale GetLocale();
@@ -172,15 +173,20 @@ namespace Union {
     GetLocaleInfoW( lcid, LOCALE_SENGLANGUAGE, buffer, sizeof( buffer ) );
   }
 
-  inline Locale::Locale() {
-    memset( this, 0, sizeof( Locale ) );
-  }
-
-  inline void Locale::operator =( Locale locale ) {
+  inline Locale& Locale::operator=( const Locale& locale ) {
     LanguageCodeID = locale.LanguageCodeID;
     Language = locale.Language;
     Codepage = locale.Codepage;
     memcpy( LanguageName, locale.LanguageName, sizeof( LanguageName ) );
+    SetConsoleOutputCP( (uint)Codepage );
+    return *this;
+  }
+
+  inline Locale::Locale( const Locale& locale ) {
+    LanguageCodeID = locale.LanguageCodeID;
+    Language = locale.Language;
+    Codepage = locale.Codepage;
+    memcpy( LanguageName, locale.LanguageName, sizeof( LanguageName ));
     SetConsoleOutputCP( (uint)Codepage );
   }
 

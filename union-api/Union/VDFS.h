@@ -408,7 +408,7 @@ namespace Union {
    * @param full_file_names Buffer to be copied full file names (sepparated by '|')
    * @return Found files count
    */
-  static int vdf_searchfile( const char* file_name, OUT char* full_file_names ) {
+  [[maybe_unused]] static int vdf_searchfile( const char* file_name, OUT char* full_file_names ) {
     StringANSI fileName = StringANSI( file_name ).MakeUpper().TrimLeft( "\\" );
     int systems = VDF_VIRTUAL | VDF_PHYSICAL;
     const VDFS::File* file = VDFS::GetDefaultInstance().GetFile( fileName, systems );
@@ -442,7 +442,7 @@ namespace Union {
    * @param handle Buffer to be copied the error text
    * @return Text length
    */
-  static int vdf_getlasterror( OUT char* error ) {
+  [[maybe_unused]] static int vdf_getlasterror( OUT char* error ) {
     StringANSI& lastError = VDFS::GetDefaultInstance().LastError;
     strcpy_s( error, lastError.GetLength() + 1, lastError );
     return lastError.GetLength();
@@ -557,11 +557,12 @@ namespace Union {
       uint Type;
     } entry;
 
-    while( BaseStream->Read( &entry, sizeof( entry ) ) ) {
-      StringANSI name = StringANSI( entry.Name, sizeof( entry.Name ) ).TrimRight();
+    constexpr Union::uint NameSize = sizeof(entry.Name);
+    while( BaseStream->Read( &entry, NameSize ) ) {
+      StringANSI name = StringANSI( entry.Name, NameSize ).TrimRight();
       if( entry.Position < DataPosition ) {
         size_t savPos = BaseStream->GetPosition();
-        size_t nextPos = 296 + 80 * entry.Position;
+        size_t nextPos = 296U + 80U * entry.Position;
         BaseStream->SetPosition( nextPos );
         ReadNextEntry( StringANSI::Format( "{0}{1}\\", dir, name ) );
         BaseStream->SetPosition( savPos );
@@ -599,14 +600,14 @@ namespace Union {
       return false;
     }
 
-    if( BaseStream->GetSize() < 296 ) {
+    if( BaseStream->GetSize() < 296U ) {
       delete BaseStream;
       BaseStream = nullptr;
       return false;
     }
 
     int entriesCount;
-    BaseStream->SetPosition( 272 );
+    BaseStream->SetPosition( 272U );
     BaseStream->Read( &entriesCount, sizeof( entriesCount ) );
     if( entriesCount == 0 ) {
       delete BaseStream;
@@ -614,9 +615,9 @@ namespace Union {
       return false;
     }
 
-    BaseStream->SetPosition( 280 );
+    BaseStream->SetPosition( 280U );
     BaseStream->Read( &Timestamp, sizeof( Timestamp ) );
-    BaseStream->SetPosition( 288 );
+    BaseStream->SetPosition( 288U );
     BaseStream->Read( &DataPosition, sizeof( DataPosition ) );
     BaseStream->Read( &Flags, sizeof( Flags ) );
     ReadNextEntry( StringANSI::GetEmpty() );
@@ -676,8 +677,9 @@ namespace Union {
     }
 
     for( auto file : volume->Files_ByFullName ) {
-      uint index = Virtual.Files_ByFullName.IndexOf<File::Sortion_ByFullName>( file );
-      if( index != -1 && file->Timestamp > Virtual.Files_ByFullName[index]->Timestamp ) {
+      uint index = Virtual.Files_ByFullName.IndexOf<&File::Sortion_ByFullName>( file );
+      constexpr uint invalidIndex = static_cast<uint>(-1);
+      if( index != invalidIndex && file->Timestamp > Virtual.Files_ByFullName[index]->Timestamp ) {
         Virtual.Files_ByFullName[index]->Release();
         Virtual.Files_ByFullName[index] = file;
         file->Acquire();
@@ -688,7 +690,7 @@ namespace Union {
       }
 
       index = Virtual.Files_ByName.IndexOf<File::Sortion_ByName>( file );
-      if( index != -1 && file->Timestamp > Virtual.Files_ByName[index]->Timestamp ) {
+      if( index != invalidIndex && file->Timestamp > Virtual.Files_ByName[index]->Timestamp ) {
         Virtual.Files_ByName[index]->Release();
         Virtual.Files_ByName[index] = file;
         file->Acquire();
@@ -709,10 +711,11 @@ namespace Union {
     tmpFile.FullNameVirtual = name;
     tmpFile.FullNameVirtual.MakeUpper();
     bool physicalFirst = (system & VDF_PHYSICALFIRST) == VDF_PHYSICALFIRST;
+    constexpr uint invalidIndex = static_cast<uint>(-1);
 
     if( physicalFirst ) {
       uint index = Physical.Files_ByFullName.IndexOf<File::Sortion_ByFullName>( &tmpFile );
-      if( index != -1 ) {
+      if( index != invalidIndex ) {
         system = VDF_PHYSICAL;
         // Physical.Files_ByFullName[index]->Acquire();
         return Physical.Files_ByFullName[index];
@@ -721,7 +724,7 @@ namespace Union {
 
     if( system & VDF_VIRTUAL ) {
       uint index = Virtual.Files_ByFullName.IndexOf<File::Sortion_ByFullName>( &tmpFile );
-      if( index != -1 ) {
+      if( index != invalidIndex ) {
         system = VDF_VIRTUAL;
         // Virtual.Files_ByFullName[index]->Acquire();
         return Virtual.Files_ByFullName[index];
@@ -730,7 +733,7 @@ namespace Union {
 
     if( !physicalFirst && system & VDF_PHYSICAL ) {
       uint index = Physical.Files_ByFullName.IndexOf<File::Sortion_ByFullName>( &tmpFile );
-      if( index != -1 ) {
+      if( index != invalidIndex ) {
         system = VDF_PHYSICAL;
         // Physical.Files_ByFullName[index]->Acquire();
         return Physical.Files_ByFullName[index];
@@ -750,10 +753,11 @@ namespace Union {
     tmpFile.Name = name;
     tmpFile.Name.MakeUpper();
     bool physicalFirst = (system & VDF_PHYSICALFIRST) == VDF_PHYSICALFIRST;
+    constexpr uint invalidIndex = static_cast<uint>(-1);
 
     if( physicalFirst ) {
       uint index = Physical.Files_ByName.IndexOf<File::Sortion_ByName>( &tmpFile );
-      if( index != -1 ) {
+      if( index != invalidIndex ) {
         system = VDF_PHYSICAL;
         // Physical.Files_ByName[index]->Acquire();
         return Physical.Files_ByName[index];
@@ -762,7 +766,7 @@ namespace Union {
 
     if( system & VDF_VIRTUAL ) {
       uint index = Virtual.Files_ByName.IndexOf<File::Sortion_ByName>( &tmpFile );
-      if( index != -1 ) {
+      if( index != invalidIndex ) {
         system = VDF_VIRTUAL;
         // Virtual.Files_ByName[index]->Acquire();
         return Virtual.Files_ByName[index];
@@ -771,7 +775,7 @@ namespace Union {
 
     if( !physicalFirst && system & VDF_PHYSICAL ) {
       uint index = Physical.Files_ByName.IndexOf<File::Sortion_ByName>( &tmpFile );
-      if( index != -1 ) {
+      if( index != invalidIndex ) {
         system = VDF_PHYSICAL;
         // Physical.Files_ByName[index]->Acquire();
         return Physical.Files_ByName[index];

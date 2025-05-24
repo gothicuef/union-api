@@ -16,7 +16,7 @@ namespace Union {
   class UNION_API Stream {
   public:
     virtual bool IsOpened() const = 0;
-    virtual int GetSize() const = 0;
+    virtual size_t GetSize() const = 0;
     virtual size_t Read( void* where, size_t length ) = 0;
     virtual size_t Write( void* where, size_t length ) = 0;
     virtual void SetPosition( size_t position, int origin = SEEK_SET ) = 0;
@@ -39,7 +39,7 @@ namespace Union {
     FileReader( const char* fileName, bool exclusive = false );
     FileReader( const wchar* fileName, bool exclusive = false );
     virtual bool IsOpened() const;
-    virtual int GetSize() const;
+    virtual size_t GetSize() const;
     virtual size_t Read( void* where, size_t length );
     virtual size_t ReadLine( void* where, int eol );
     virtual size_t Write( void* where, size_t length );
@@ -63,7 +63,7 @@ namespace Union {
     FileWriter( const char* fileName, bool append = false );
     FileWriter( const wchar* fileName, bool append = false );
     virtual bool IsOpened() const;
-    virtual int GetSize() const;
+    virtual size_t GetSize() const;
     virtual size_t Read( void* where, size_t length );
     virtual size_t Write( void* where, size_t length );
     virtual void SetPosition( size_t position, int origin = SEEK_SET );
@@ -126,7 +126,7 @@ namespace Union {
 
   inline FileReader::FileReader( const wchar* fileName, bool exclusive ) {
     Exclusize = exclusive;
-    size_t fileNameLen = lstrlenW( fileName );
+    int fileNameLen = lstrlenW( fileName );
     FileNameUnicode = new wchar[fileNameLen + 1];
     lstrcpyW( FileNameUnicode, fileName );
     FileName = nullptr;
@@ -148,7 +148,7 @@ namespace Union {
   }
 
 
-  inline int FileReader::GetSize() const {
+  inline size_t FileReader::GetSize() const {
     return Size;
   }
 
@@ -164,22 +164,22 @@ namespace Union {
       if( *(buffer++) == eol )
         break;
     }
-    return buffer - (byte*)where;
+    return static_cast<size_t>(buffer - (byte*)where);
   }
 
 
-  inline size_t FileReader::Write( void* where, size_t length ) {
+  inline size_t FileReader::Write( [[maybe_unused]] void* where, [[maybe_unused]] size_t length ) {
     return 0; // pass
   }
 
 
   inline void FileReader::SetPosition( size_t position, int origin ) {
-    fseek( Handle, position, origin );
+    _fseeki64( Handle, static_cast<__int64>( position ), origin );
   }
 
 
   inline size_t FileReader::GetPosition() const {
-    return ftell( Handle );
+    return static_cast<size_t>( _ftelli64( Handle ) );
   }
 
 
@@ -240,7 +240,7 @@ namespace Union {
 
   
   inline FileWriter::FileWriter( const wchar* fileName, bool append ) {
-    size_t fileNameLen = lstrlenW( fileName );
+    const int fileNameLen = lstrlenW( fileName );
     FileNameUnicode = new wchar[fileNameLen + 1];
     lstrcpyW( FileNameUnicode, fileName );
     FileName = nullptr;
@@ -262,12 +262,12 @@ namespace Union {
   }
 
 
-  inline int FileWriter::GetSize() const {
+  inline size_t FileWriter::GetSize() const {
     return Size;
   }
 
 
-  inline size_t FileWriter::Read( void* where, size_t length ) {
+  inline size_t FileWriter::Read( [[maybe_unused]] void* where, [[maybe_unused]] size_t length ) {
     return 0; // pass
   }
 
@@ -280,12 +280,12 @@ namespace Union {
 
 
   inline void FileWriter::SetPosition( size_t position, int origin ) {
-    fseek( Handle, position, origin );
+    _fseeki64( Handle, static_cast<__int64>( position ), origin );
   }
 
 
   inline size_t FileWriter::GetPosition() const {
-    return ftell( Handle );
+    return static_cast<size_t>( _ftelli64( Handle ) );
   }
 
 

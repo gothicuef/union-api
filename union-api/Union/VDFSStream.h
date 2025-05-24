@@ -25,10 +25,10 @@ namespace Union {
     StreamFilter( Stream* baseStream );
     virtual void SetPosition( size_t position, int origin = SEEK_SET );
     virtual size_t GetPosition() const;
-    virtual int GetSize() const;
+    virtual size_t GetSize() const;
     virtual void SetStartPosition( size_t position );
     virtual void SetSize( size_t size );
-    virtual Stream* const GetBaseStream() const;
+    virtual Stream* GetBaseStream() const;
   };
 
   class UNION_API StreamFilterCached : public StreamFilter {
@@ -50,6 +50,8 @@ namespace Union {
     virtual Stream* OpenCopy();
     virtual HANDLE GetHandle();
     virtual ~StreamFilterCached();
+
+    static constexpr size_t InvalidPosition = static_cast<size_t>(-1);
   };
 
 
@@ -103,7 +105,7 @@ namespace Union {
     StreamFilterZIP( Stream* baseStream );
     StreamFilterZIP( Stream* baseStream, size_t position, size_t size );
     virtual bool IsOpened() const;
-    virtual int GetSize() const;
+    virtual size_t GetSize() const;
     virtual size_t Read( void* where, size_t length );
     virtual size_t Write( void* where, size_t length );
     virtual void SetPosition( size_t position, int origin = SEEK_SET );
@@ -157,7 +159,7 @@ namespace Union {
   public:
     StreamFilterOGG( Stream* baseStream );
     virtual bool IsOpened() const;
-    virtual int GetSize() const;
+    virtual size_t GetSize() const;
     virtual size_t Read( void* where, size_t length );
     virtual size_t Write( void* where, size_t length );
     virtual void SetPosition( size_t position, int origin = SEEK_SET );
@@ -203,7 +205,7 @@ namespace Union {
   }
 
 
-  inline Stream* const StreamFilter::GetBaseStream() const {
+  inline Stream* StreamFilter::GetBaseStream() const {
     return BaseStream;
   }
 
@@ -222,7 +224,7 @@ namespace Union {
   }
 
 
-  inline int StreamFilter::GetSize() const {
+  inline size_t StreamFilter::GetSize() const {
     return StreamFilter::Size;
   }
 #pragma endregion
@@ -230,12 +232,12 @@ namespace Union {
 
 #pragma region stream_filter_cached
   inline StreamFilterCached::StreamFilterCached( Stream* baseStream ) : StreamFilter( baseStream ) {
-    CachePosition = -1;
+    CachePosition = InvalidPosition;
   }
 
 
   inline StreamFilterCached::StreamFilterCached( Stream* baseStream, size_t position, size_t size ) : StreamFilter( baseStream ) {
-    CachePosition = -1;
+    CachePosition = InvalidPosition;
     SetStartPosition( position );
     SetSize( size );
   }
@@ -276,7 +278,7 @@ namespace Union {
     size_t toRead = std::min( length, maxToRead );
 
     if( toRead > sizeof( Cache ) ) {
-      CachePosition = -1;
+      CachePosition = InvalidPosition;
       return BaseStream->Read( where, toRead );
     }
     
@@ -291,7 +293,7 @@ namespace Union {
 
   inline void StreamFilterCached::SetPosition( size_t position, int origin ) {
     StreamFilter::SetPosition( position, origin );
-    CachePosition = -1;
+    CachePosition = InvalidPosition;
   }
 
 
@@ -472,7 +474,7 @@ namespace Union {
       BaseStream->Read( &blockSize, 4 );
 
       byte* compressedData = new byte[compressedLength];
-      size_t readed = BaseStream->Read( compressedData, compressedLength );
+      [[maybe_unused]] size_t readed = BaseStream->Read( compressedData, compressedLength );
       Decompressor::GetInstance().Decompress( compressedData, compressedLength, where, sourceLength, true );
       where += sourceLength;
     }
@@ -487,7 +489,7 @@ namespace Union {
   }
 
 
-  inline int StreamFilterZIP::GetSize() const {
+  inline size_t StreamFilterZIP::GetSize() const {
     return DecompressedSize;
   }
 
@@ -499,7 +501,7 @@ namespace Union {
   }
 
 
-  inline size_t StreamFilterZIP::Write( void* where, size_t length ) {
+  inline size_t StreamFilterZIP::Write( [[maybe_unused]] void* where, [[maybe_unused]] size_t length ) {
     return 0;
   }
 
@@ -609,7 +611,7 @@ namespace Union {
   }
 
 
-  inline int StreamFilterOGG::GetSize() const {
+  inline size_t StreamFilterOGG::GetSize() const {
     if( !ogg.IsVorbis )
       return BaseStream->GetSize();
 
@@ -649,12 +651,12 @@ namespace Union {
   }
 
 
-  inline size_t StreamFilterOGG::Write( void* where, size_t length ) {
+  inline size_t StreamFilterOGG::Write( [[maybe_unused]] void* where, [[maybe_unused]] size_t length ) {
     return 0;
   }
 
 
-  inline void StreamFilterOGG::SetPosition( size_t position, int origin ) {
+  inline void StreamFilterOGG::SetPosition( size_t position, [[maybe_unused]] int origin ) {
     ov_pcm_seek( &ogg.Vorbis, position );
   }
 
@@ -709,7 +711,7 @@ namespace Union {
   }
 
 
-  inline uint StreamFilterOGG::VorbisRead( void* where, uint size, uint length, void* streamHandle ) {
+  inline uint StreamFilterOGG::VorbisRead( void* where, [[maybe_unused]] uint size, uint length, void* streamHandle ) {
     return ((StreamFilterOGG*)streamHandle)->BaseStream->Read( where, length );
   }
 
@@ -725,7 +727,7 @@ namespace Union {
   }
 
 
-  inline int StreamFilterOGG::VorbisClose( void* streamHandle ) {
+  inline int StreamFilterOGG::VorbisClose( [[maybe_unused]] void* streamHandle ) {
     return 0;
   }
 #pragma endregion
