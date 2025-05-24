@@ -154,7 +154,7 @@ namespace Union {
        * @brief Returns the raw timestamp of this volume
        * @return The raw timestamp
        */
-      const uint GetTimestamp() const;
+      uint GetTimestamp() const;
     };
 
   protected:
@@ -656,7 +656,7 @@ namespace Union {
 
 
 
-  inline const uint VDFS::Volume::GetTimestamp() const {
+  inline uint VDFS::Volume::GetTimestamp() const {
     return Timestamp;
   }
 #pragma endregion
@@ -977,7 +977,7 @@ namespace Union {
         if( file->FullNameVirtual.StartsWith( localSystemDirectory ) )
           file->FullNameVirtual.Replace( localSystemDirectory, "SYSTEM\\" );
 
-      Physical.Files_ByFullName.QuickSort<File::Sortion_ByFullName>();
+      Physical.Files_ByFullName.QuickSort<&File::Sortion_ByFullName>();
     }
   }
 

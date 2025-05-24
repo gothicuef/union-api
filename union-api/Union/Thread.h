@@ -19,7 +19,7 @@ namespace Union {
     void Suspend();
     void Resume();
     void SetPriotity( int priority );
-    bool WaitForEnd( int ms = INFINITE );
+    bool WaitForEnd( DWORD ms = INFINITE );
     void* GetFunction();
     int GetPriority();
     DWORD GetID();
@@ -51,7 +51,7 @@ namespace Union {
     Event( bool opened = false );
     bool Open();
     bool Close();
-    bool WaitForClose( int ms = INFINITE );
+    bool WaitForClose( DWORD ms = INFINITE );
     bool IsOpen() const;
     HANDLE GetHandle();
     ~Event();
@@ -75,7 +75,7 @@ namespace Union {
   class UNION_API Semaphore {
     HANDLE Handle;
   public:
-    Semaphore( ulong maximumThreads );
+    Semaphore( long maximumThreads );
     bool Enter();
     bool Leave();
     ~Semaphore();
@@ -129,7 +129,7 @@ namespace Union {
   }
 
 
-  inline bool Thread::WaitForEnd( int ms ) {
+  inline bool Thread::WaitForEnd( DWORD ms ) {
     return WaitForSingleObject( Handle, ms ) == 0;
   }
 
@@ -206,7 +206,7 @@ namespace Union {
   }
 
 
-  inline bool Event::WaitForClose( int ms ) {
+  inline bool Event::WaitForClose( DWORD ms ) {
     return WaitForSingleObject( Handle, ms ) == 0;
   }
 
@@ -268,7 +268,7 @@ namespace Union {
 
 
 #pragma region semaphore
-  inline Semaphore::Semaphore( int maximumThreads ) {
+  inline Semaphore::Semaphore( long maximumThreads ) {
     Handle = CreateSemaphore( nullptr, maximumThreads, maximumThreads, nullptr );
   }
 

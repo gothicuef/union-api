@@ -46,7 +46,7 @@ namespace Union {
     Array<Signature*> Signatures;
 
     void ReadFromFile( const StringANSI& fileName );
-    void ReadFromResource( int ID, const char* type );
+    void ReadFromResource( uint ID, const char* type );
   public:
 
     Signature* FindSimilarSignature( Signature* sig ) const;
@@ -125,7 +125,7 @@ namespace Union {
     if( ArgumentsTypeNames.GetCount() != sig->ArgumentsTypeNames.GetCount() )
       return false;
 
-    for( auto i = 0; i < ArgumentsTypeNames.GetCount(); i++ )
+    for( uint i = 0; i < ArgumentsTypeNames.GetCount(); i++ )
       if( ArgumentsTypeNames[i] != sig->ArgumentsTypeNames[i] )
         return false;
 
@@ -154,7 +154,7 @@ namespace Union {
     if( clone1.ArgumentsTypeNames.GetCount() != clone2.ArgumentsTypeNames.GetCount() )
       return false;
 
-    for( auto i = 0; i < ArgumentsTypeNames.GetCount(); i++ )
+    for( uint i = 0; i < ArgumentsTypeNames.GetCount(); i++ )
       if( clone1.ArgumentsTypeNames[i] != clone2.ArgumentsTypeNames[i] )
         return false;
 
@@ -247,14 +247,14 @@ namespace Union {
       sig->CallingConventionName = tokens[2];
       sig->ClassName             = tokens[3];
       sig->FunctionName          = tokens[4];
-      for( auto i = 5; i < tokens.GetCount(); i++ )
+      for( uint i = 5; i < tokens.GetCount(); i++ )
         sig->ArgumentsTypeNames.Insert( tokens[i] );
 
       } );
   }
 
 
-  inline void SignatureFile::ReadFromResource( int ID, const char* type ) {
+  inline void SignatureFile::ReadFromResource( uint ID, const char* type ) {
     ResourceID = ID;
 
     HANDLE module = Dll::FindNearestModule();
@@ -286,7 +286,7 @@ namespace Union {
       sig->CallingConventionName = tokens[2].Trim();
       sig->ClassName             = tokens[3].Trim();
       sig->FunctionName          = tokens[4].Trim();
-      for( auto i = 5; i < tokens.GetCount(); i++ )
+      for( uint i = 5; i < tokens.GetCount(); i++ )
         sig->ArgumentsTypeNames.Insert( tokens[i] );
 
       } );

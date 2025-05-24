@@ -627,17 +627,17 @@ namespace Union {
   }
 
 
-  inline int str_msgbox( const char* message, int flags ) {
+  inline int str_msgbox( const char* message, UINT flags ) {
     return str_msgbox( message, "", flags );
   }
 
 
-  inline int str_msgbox( const wchar* message, const wchar* title = L"", int flags = 0 ) {
+  inline int str_msgbox( const wchar* message, const wchar* title = L"", UINT flags = 0 ) {
     return MessageBoxW( 0, message, title, flags );
   }
 
 
-  inline int str_msgbox( const wchar* message, int flags ) {
+  inline int str_msgbox( const wchar* message, UINT flags ) {
     return str_msgbox( message, L"", flags );
   }
 #endif

@@ -28,7 +28,7 @@ namespace Union {
     UnionRegexA( const StringANSI& input, const StringANSI& pattern );
     bool Next();
     StringANSI Replace( const StringANSI& output );
-    const StringANSI operator [] ( int index ) const;
+    const StringANSI operator [] ( uint index ) const;
     const StringANSI GetValue() const;
     uint GetLength() const;
     const StringANSI* begin() const;
@@ -47,7 +47,7 @@ namespace Union {
     UnionRegexW( const StringUTF16& input, const StringUTF16& pattern );
     bool Next();
     StringUTF16 Replace( const StringUTF16& output );
-    const StringUTF16 operator [] ( int index ) const;
+    const StringUTF16 operator [] ( uint index ) const;
     const StringUTF16 GetValue() const;
     uint GetLength() const;
     const StringUTF16* begin() const;
@@ -85,7 +85,7 @@ namespace Union {
   }
 
 
-  inline const StringANSI UnionRegexA::operator [] ( int index ) const {
+  inline const StringANSI UnionRegexA::operator [] ( uint index ) const {
     return index < Match.GetCount() ? Match[index] : StringANSI::GetEmpty();
   }
 
@@ -140,7 +140,7 @@ namespace Union {
   }
 
 
-  inline const StringUTF16 UnionRegexW::operator [] ( int index ) const {
+  inline const StringUTF16 UnionRegexW::operator [] ( uint index ) const {
     return index < Match.GetCount() ? Match[index] : StringUTF16::GetEmpty();
   }
 

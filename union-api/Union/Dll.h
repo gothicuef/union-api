@@ -137,8 +137,8 @@ namespace Union {
       return dll;
     }
 
-    void* module = ::LoadLibraryExA( fullName, nullptr,
-      asResource ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0 );
+    const DWORD loadFlags = asResource ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0U;
+    void* module = ::LoadLibraryExA( fullName, nullptr, loadFlags );
 
     if( !module )
       return nullptr;
@@ -161,8 +161,8 @@ namespace Union {
       return dll;
     }
 
-    void* module = ::LoadLibraryExA( fullName, nullptr,
-      asResource ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0 );
+    const DWORD loadFlags = asResource ? LOAD_LIBRARY_AS_IMAGE_RESOURCE : 0;
+    void* module = ::LoadLibraryExA( fullName, nullptr, loadFlags );
 
     if( !module )
       return nullptr;

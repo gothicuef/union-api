@@ -639,7 +639,7 @@ namespace Union {
 
     int bitstream = -1;
     while( leftToRead > 0 ) {
-      long readed = ov_read( &ogg.Vorbis, (char*)where, leftToRead, 0, 2, 1, &bitstream );
+      long readed = ov_read( &ogg.Vorbis, (char*)where, static_cast<int>( leftToRead ), 0, 2, 1, &bitstream );
       if( readed <= 0 )
         break;
       
@@ -717,13 +717,14 @@ namespace Union {
 
 
   inline int StreamFilterOGG::VorbisSeek( void* streamHandle, int64 position, int origin ) {
-    ((StreamFilterOGG*)streamHandle)->BaseStream->SetPosition( (size_t)position, origin );
-    return ((StreamFilterOGG*)streamHandle)->BaseStream->GetPosition();
+    auto stream = static_cast<StreamFilterOGG*>( streamHandle );
+    stream->BaseStream->SetPosition( (size_t)position, origin );
+    return stream->BaseStream->GetPosition();
   }
 
 
   inline long StreamFilterOGG::VorbisTell( void* streamHandle ) {
-    return ((StreamFilterOGG*)streamHandle)->BaseStream->GetPosition();
+    return static_cast<StreamFilterOGG*>( streamHandle)->BaseStream->GetPosition();
   }
 
 

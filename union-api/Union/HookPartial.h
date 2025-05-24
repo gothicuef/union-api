@@ -18,7 +18,7 @@
 namespace Union {
 #if !defined(_UNION_API_DLL) || defined(_UNION_API_BUILD)
   inline void x86_set_jump_offset( byte* from, byte* to ) {
-    *(DWORD*)from = to - from - 4;
+    *(DWORD*)from = static_cast<DWORD>(to - from - 4U);
   }
 
   inline void x86_set_jump( byte* from, byte* to ) {
@@ -78,7 +78,7 @@ namespace Union {
   }
 
   inline void x86_set_reg_dword( byte* ptr, byte reg, DWORD dword ) {
-    ptr[0] = 0xB8 + reg;
+    ptr[0] = static_cast<byte>( 0xB8 ) + reg;
     *(DWORD*)&ptr[1] = dword;
   }
 
@@ -253,7 +253,7 @@ namespace Union {
     }
 
     SavedCodePosition = (byte*)whereFrom;
-    SavedCodeLength = farEnd - (byte*)whereFrom;
+    SavedCodeLength = static_cast<uint>( farEnd - (byte*)whereFrom );
     memcpy( SavedCode, whereFrom, SavedCodeLength );
     
     ulong protection = PAGE_EXECUTE_READWRITE;

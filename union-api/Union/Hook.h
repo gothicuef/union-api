@@ -61,7 +61,7 @@ namespace Union {
     return Hook<PartialHookProc>( provider );
   }
 
-
+  // TODO this is UB, should be changed
   inline Hook<PartialHookProc> CreatePartialHook( void* whereFrom, PartialHookNoRegsProc whereTo ) {
     return CreatePartialHook( whereFrom, (PartialHookProc)whereTo );
   }

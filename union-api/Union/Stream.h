@@ -126,7 +126,7 @@ namespace Union {
 
   inline FileReader::FileReader( const wchar* fileName, bool exclusive ) {
     Exclusize = exclusive;
-    int fileNameLen = lstrlenW( fileName );
+    const auto fileNameLen = static_cast<size_t>( lstrlenW( fileName ) );
     FileNameUnicode = new wchar[fileNameLen + 1];
     lstrcpyW( FileNameUnicode, fileName );
     FileName = nullptr;
@@ -240,7 +240,7 @@ namespace Union {
 
   
   inline FileWriter::FileWriter( const wchar* fileName, bool append ) {
-    const int fileNameLen = lstrlenW( fileName );
+     const auto fileNameLen = static_cast<size_t>( lstrlenW( fileName ) );
     FileNameUnicode = new wchar[fileNameLen + 1];
     lstrcpyW( FileNameUnicode, fileName );
     FileName = nullptr;
