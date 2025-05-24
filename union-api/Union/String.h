@@ -1708,8 +1708,8 @@ namespace Union {
 
   template<typename T>
   UnionString<T>& UnionString<T>::Insert( const T* c_str ) {
-    int length = str_get_length( c_str );
-    int index = Length;
+    uint length = str_get_length( c_str );
+    uint index = Length;
     Length += length;
     Allocate();
     str_copy( Data + index, c_str, length );
@@ -1769,8 +1769,8 @@ namespace Union {
   // segments part by part (not a full string).
   template<typename T>
   UnionString<T>& UnionString<T>::Replace( const T* c_src, const T* c_dst, Flags flags ) {
-    int srclen = str_get_length( c_src );
-    int dstlen = str_get_length( c_dst );
+    uint srclen = str_get_length( c_src );
+    uint dstlen = str_get_length( c_dst );
 
     // Simple replace words if the source word length
     // is equal to destination word length.
@@ -1859,7 +1859,7 @@ namespace Union {
 
   template<typename T>
   UnionString<T>& UnionString<T>::TrimLeft( const T* characters ) {
-    int cutLength = 0;
+    uint cutLength = 0;
     T* i = Data;
     while( *i != 0 && char_is_matches_to_range( *(i++), characters, false ) )
       cutLength++;
@@ -1870,7 +1870,7 @@ namespace Union {
 
   template<typename T>
   UnionString<T>& UnionString<T>::TrimRight( const T* characters ) {
-    int cutLength = 0;
+    uint cutLength = 0;
     T* i = Data + Length - 1;
     while( i >= Data && char_is_matches_to_range( *(i--), characters, false ) )
       cutLength++;
@@ -1923,7 +1923,7 @@ namespace Union {
       ulong pathLength = get_current_directory( (T*)nullptr, 0 );
       currentDirectory.SetLength( pathLength );
       get_current_directory( currentDirectory.ToChar(), pathLength );
-      currentDirectory[pathLength - 1] = '\\';
+      currentDirectory[pathLength - 1U] = '\\';
       *this = currentDirectory + *this;
     }
 
