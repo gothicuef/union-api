@@ -24,6 +24,7 @@ target_sources(detours
 )
 
 set_property(SOURCE "detours/src/uimports.cpp" APPEND PROPERTY HEADER_FILE_ONLY true)
+target_compile_options(detours PRIVATE "/Zc:gotoScope-")
 
 target_include_directories(detours PUBLIC "detours/src/")
 target_compile_definitions(detours
