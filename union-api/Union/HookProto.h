@@ -4,6 +4,17 @@
 #include "Types.h"
 #include "Signature.h"
 
+#include <type_traits>
+#if __cplusplus >= 202002L
+#include <bit>
+#define UNION_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#define UNION_BIT_CAST std::bit_cast
+#else
+#define UNION_NO_UNIQUE_ADDRESS
+#define UNION_BIT_CAST std::_Bit_cast
+#endif
+
+
 namespace Union {
   struct AnyPtr {
     void* VoidPtr;
@@ -18,6 +29,11 @@ namespace Union {
     }
   };
 
+  template<typename To, typename From>
+  constexpr To bit_cast( const From& from ) noexcept
+  {
+    return UNION_BIT_CAST<To>( from );
+  }
 
   enum class HookType {
     Hook_Auto,
@@ -61,18 +77,45 @@ namespace Union {
     virtual void* GetReturnAddress() = 0;
   };
 
+  using FunctionAddress = void*;
+
+  template<typename EntryType>
+  constexpr bool non_trivial_member_function_pointer = (std::is_member_function_pointer_v<EntryType>) && (sizeof( EntryType ) > sizeof( FunctionAddress ));
+
+  template<typename EntryType, bool = non_trivial_member_function_pointer<EntryType>>
+  struct FunctionMetadata : std::false_type{};
+
+  template<typename EntryType>
+  struct FunctionMetadata<EntryType, true> : std::true_type {
+    std::byte Rawdata[sizeof( EntryType ) - sizeof( FunctionAddress )];
+  };
+
+  template<typename EntryType, bool = non_trivial_member_function_pointer<EntryType>>
+  struct alignas( EntryType ) PointerWrapper {
+    void* Address;
+  };
+
+  template<typename EntryType>
+  struct alignas( EntryType ) PointerWrapper<EntryType, true> {
+    void* Address;
+    FunctionMetadata<EntryType> Metadata;
+  };
+
+  template<typename T>
+  using HookMetadata = FunctionMetadata<T>;
 
   template<typename EntryType>
   class Hook {
-    HookProvider* Provider;
+    HookProvider* Provider{};
+    UNION_NO_UNIQUE_ADDRESS const HookMetadata<EntryType> Metadata{};
     Hook() { }
   public:
-    Hook( HookProvider* provider );
+    Hook( HookProvider* provider, const HookMetadata<EntryType>* metadata = nullptr );
     Hook( const Hook& other );
     bool Enable( void* originPtr, void* destPtr );
     bool Enable();
     bool Disable();
-    operator EntryType();
+    operator EntryType() const;
   };
 
 
@@ -119,8 +162,8 @@ namespace Union {
 
 
   template<typename EntryType>
-  Hook<EntryType>::Hook( HookProvider* provider ) {
-    Provider = provider;
+  Hook<EntryType>::Hook( HookProvider* provider, const HookMetadata<EntryType>* metadata )
+      : Provider{ provider }, Metadata{ metadata ? *metadata : HookMetadata<EntryType>{} } {
   }
 
 
@@ -149,10 +192,17 @@ namespace Union {
 
 
   template<typename EntryType>
-  Hook<EntryType>::operator EntryType() {
-    // Hack for the x64 addresses on x86 arc
-    uint64 ptr = (uint64)Provider->GetReturnAddress();
-    return *(EntryType*)&ptr;
+  Hook<EntryType>::operator EntryType() const {
+    if constexpr(!non_trivial_member_function_pointer<EntryType>) {
+      return bit_cast<EntryType>( Provider->GetReturnAddress() );
+    }
+    else { 
+      const PointerWrapper<EntryType> wrapper{
+       .Address = Provider->GetReturnAddress(),
+       .Metadata = this->Metadata
+      };
+      return bit_cast<EntryType>( wrapper );
+    }
   }
 }
 
