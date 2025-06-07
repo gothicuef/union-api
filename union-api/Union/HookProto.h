@@ -198,8 +198,8 @@ namespace Union {
     }
     else { 
       const PointerWrapper<EntryType> wrapper{
-       .Address = Provider->GetReturnAddress(),
-       .Metadata = this->Metadata
+        Provider->GetReturnAddress(),
+        this->Metadata
       };
       return bit_cast<EntryType>( wrapper );
     }
