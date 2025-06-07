@@ -193,7 +193,7 @@ namespace Union {
 
   template<typename EntryType>
   Hook<EntryType>::operator EntryType() const {
-    if constexpr(!non_trivial_member_function_pointer<EntryType>) {
+    if constexpr( !non_trivial_member_function_pointer<EntryType> ) {
       return bit_cast<EntryType>( Provider->GetReturnAddress() );
     }
     else { 
