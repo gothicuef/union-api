@@ -10,25 +10,55 @@ Union API is **under active development** and is not released yet. You are welco
 
 ## Documentation
 
-Documentation is available on [Union API Wiki](https://gitlab.com/union-framework/union-api/-/wikis/home).
+Documentation is available on [Union Framework Docs](https://union-framework.gitlab.io/docs/union-api/).
 
 ## Usage
 
 ### Build
+Union API is built using [CMake](https://cmake.org/) and requires C++17 or later to compile. The recommended way to build is to use [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) with CMake support enabled.
 
-Union API is a Visual Studio solution and requires Visual Studio 2022 (v143) platform toolset to compile. To build the Union API, clone the repository to your computer, open `union-api.sln` using Visual Studio and select the configuration:
+Project could be built in several configurations, depending on how you want to use it:
 
-* **DLL** - dynamically linked library (recommended)
+* **DLL** - dynamically linked library
 * **LIB** - statically linked library
 * **EXE** - executable with an entry point from `union-api.cpp` for testing the code without running it as DLL attached to the game
 
-Configurations with `d` suffix build the project for debugging.
+You can change the configuration directly in `CMakeLists.txt`  or by using command line. Default configuration is `LIB`.
 
-### Create a plugin
+### Including
 
-To create a plugin using Union API, you have to create a C++ project, add `union-api` to include directories and link Union API to it. Then you can compile the plugin with preprocessor definitions `_UNION_API_DLL` if you linked Union API dynamically or `_UNION_API_LIB` if statically. The resulting plugin DLL can be loaded by Gothic with Union runtime installed.
+To include Union API in your project, you need to get its source using git submodule or CMake's `FetchContent` module.
 
-For the step-by-step instructions follow [Create a new project](https://gitlab.com/union-framework/union-api/-/wikis/Create-a-new-project) Wiki page.
+If you are using git submodule, run the following command in your project root:
+
+```bash
+git submodule add https://gitlab.com/union-framework/union-api.git
+```
+This will add Union API as a submodule in your project. You can then include it in your CMake project by adding the following lines to your `CMakeLists.txt`:
+
+```cmake
+add_subdirectory(union-api)
+```
+
+If you are using CMake's `FetchContent`, add the following lines to your `CMakeLists.txt`:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    union-api
+    GIT_REPOSITORY https://gitlab.com/union-framework/union-api.git
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(union-api)
+```
+
+### Linking
+
+After including Union API, you can link it to your target. For example, if your target is `your_target`, you can add the following line to your `CMakeLists.txt`:
+
+```cmake
+target_link_libraries(your_target PRIVATE union_api_lib)
+```
 
 ## Support
 
