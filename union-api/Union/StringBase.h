@@ -158,7 +158,7 @@ namespace Union {
       auto colorFG = GetTerminalColorFG();
       auto colorBG = GetTerminalColorBG();
       HANDLE consoleHandle = GetStdHandle( STD_OUTPUT_HANDLE );
-      SetConsoleTextAttribute( consoleHandle, (DWORD)colorFG + ((DWORD)colorBG << 4) );
+      SetConsoleTextAttribute( consoleHandle, (WORD)colorFG + ((WORD)colorBG << 4) );
 
     }
   };

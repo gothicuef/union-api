@@ -263,8 +263,8 @@ namespace Union {
         addresses.Insert( imm32 );
 
     for( auto imm32 : moduleImm32->XCalls )
-      if( *(void**)imm32 == target )
-        addresses.Insert( imm32 );
+      if( *(void**)((byte*)imm32 + 4) == target )
+        addresses.Insert( (byte*)imm32 + 4 );
 
     for( auto imm32 : moduleImm32->Offsets ) {
       uint from   =  (uint) imm32;
