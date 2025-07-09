@@ -11,30 +11,36 @@
 namespace Union {
   template<typename EntryType>
   inline Hook<EntryType> CreateHook( void* originPtr, EntryType destPtr, HookType type = HookType::Hook_Auto ) {
-    if( !HookProvider::CanHookThisSpace() )
+    if( !HookProvider::CanHookThisSpace() || !originPtr || !destPtr )
       return Hook<EntryType>( nullptr );
-    
+
+    const auto functionWrapper = Union::bit_cast<PointerWrapper<EntryType>>( destPtr );
+
     HookProvider* provider = nullptr;
-
-    if( originPtr && destPtr ) {
-      if( provider == nullptr && type == HookType::Hook_Auto || type == HookType::Hook_CallPatch ) {
-        provider = new HookProviderPatch();
-        if( !provider->Enable( originPtr, *(void**)&destPtr ) ) {
-          delete provider;
-          provider = nullptr;
-        }
-      }
-
-      if( provider == nullptr && type == HookType::Hook_Auto || type == HookType::Hook_Detours ) {
-        provider = new HookProviderDetours();
-        if( !provider->Enable( originPtr, *(void**)&destPtr ) ) {
-          delete provider;
-          provider = nullptr;
-        }
+    if( provider == nullptr && type == HookType::Hook_Auto || type == HookType::Hook_CallPatch ) {
+      provider = new HookProviderPatch();
+      if( !provider->Enable( originPtr, functionWrapper.Address )) {
+        delete provider;
+        provider = nullptr;
       }
     }
 
-    return Hook<EntryType>( provider );
+    if( provider == nullptr && type == HookType::Hook_Auto || type == HookType::Hook_Detours ) {
+      provider = new HookProviderDetours();
+      if( !provider->Enable( originPtr, functionWrapper.Address ) ) {
+        delete provider;
+        provider = nullptr;
+      }
+    }
+
+    if constexpr ( HookMetadata<EntryType>::value )
+    {
+        return Hook<EntryType>( provider, &functionWrapper.Metadata );
+    }
+    else
+    {
+        return Hook<EntryType>( provider );
+    }
   }
 
 

@@ -36,6 +36,7 @@ if (GENERATE_UNION_API_LIB)
 	)
 
 	target_include_directories(union_api_lib PUBLIC "union-api/")
+	target_compile_options(union_api_lib PRIVATE "/Zc:__cplusplus")
 endif()
 
 # Union API dynamic lib
@@ -57,6 +58,7 @@ if (GENERATE_UNION_API_DLL)
 	)
 
 	target_include_directories(union_api_dll PUBLIC "union-api/")
+	target_compile_options(union_api_dll PRIVATE "/Zc:__cplusplus")
 endif()
 
 ## Union API executable
@@ -77,6 +79,7 @@ if (GENERATE_UNION_API_EXE)
 	)
 
 	target_include_directories(union_api_exe PUBLIC "union-api/")
+	target_compile_options(union_api_dll PRIVATE "/Zc:__cplusplus")
 endif()
 
 # dependencies
