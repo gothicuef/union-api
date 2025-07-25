@@ -1,0 +1,68 @@
+name: Sync GitLab → GitHub (with rebase)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync-gitlab:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add GitLab remote and fetch
+        run: |
+          git remote add gitlab https://gitlab.com/union-framework/union-api.git || true
+          git fetch gitlab
+          git fetch --all
+
+      - name: Update upstream-sync branch
+        run: |
+          git checkout -B upstream-sync gitlab/main
+          git push origin upstream-sync --force
+
+      - name: Check for new upstream commits vs main
+        id: check_upstream_diff
+        run: |
+          if git rev-list --count origin/main..upstream-sync | grep -q "^[1-9]"; then
+            echo "Upstream has new commits!"
+            echo "has_upstream_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No new commits from GitLab."
+            echo "has_upstream_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR from upstream-sync to main
+        if: steps.check_upstream_diff.outputs.has_upstream_changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: upstream-sync
+          title: "🔄 Sync from GitLab upstream"
+          body: |
+            This PR contains new commits fetched from GitLab:
+            https://gitlab.com/union-framework/union-api
+
+            Please review and merge to update **main**.
+
+      ######################################################
+      # 3) Rebase upstream-pr
+      ######################################################
+      - name: Update upstream-pr (rebase on upstream-sync)
+        run: |
+          # Pokud upstream-pr neexistuje, založíme ji z upstream-sync
+          if git show-ref --verify --quiet refs/remotes/origin/upstream-pr; then
+            echo "Branch upstream-pr exists, rebasing..."
+            git checkout upstream-pr
+            git rebase upstream-sync
+          else
+            echo "Branch upstream-pr not found, creating fresh from upstream-sync"
+            git checkout -B upstream-pr upstream-sync
+          fi
+
+          git push origin upstream-pr --force-with-lease
